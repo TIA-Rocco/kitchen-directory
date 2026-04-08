@@ -29,3 +29,30 @@ npm run build    # Build for production
 npm run preview  # Preview production build
 npm test         # Run Vitest unit tests
 ```
+
+## Deployment
+- **Vercel project:** kitchen-directory (roccos-projects-d33851a4)
+- **Production URL:** kitchen-directory.vercel.app (will be kitchenequipment.ca after DNS)
+- **Git integration:** TIA-Rocco/kitchen-directory on GitHub, auto-deploys on push to main
+- **Branch previews:** Enabled for all branches
+
+## Supabase
+- **Project:** kitchen-directory (ca-central-1)
+- **Project ID:** awksvtteuzrzwazqxxyi
+- **URL:** https://awksvtteuzrzwazqxxyi.supabase.co
+- **Dashboard:** Supabase dashboard is the admin panel (no custom admin UI)
+- **Tables:** companies, service_categories, reviews, contact_submissions
+- **Triggers:** ranking_score auto-computed from ranking_breakdown on insert/update
+- **RLS:** Public read for companies/services/approved reviews, public insert for reviews/contacts
+
+## Environment Variables (Vercel)
+- PUBLIC_SUPABASE_URL
+- PUBLIC_SUPABASE_ANON_KEY
+- MAILGUN_API_KEY
+- MAILGUN_DOMAIN
+
+## Deploy Process
+1. Push to `feat/*` branch for preview deploy
+2. Merge to `main` for production deploy
+3. Vercel auto-builds Astro SSG pages (~60-90s)
+4. Review approval in Supabase triggers rebuild via deploy hook (TBD)

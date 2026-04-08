@@ -1,25 +1,18 @@
 ---
 import Base from '../layouts/Base.astro';
+import { supabase } from '../lib/supabase';
 
-const services = [
-  'Design & Technical Drawings',
-  'Equipment Financing',
-  'Equipment Leasing',
-  'Commercial Equipment Procurement',
-  'Price Match',
-  'Account Management',
-  'Equipment Consulting',
-  'Restaurant Consulting',
-  'Installation Services',
-];
+const { data: serviceCategories } = await supabase
+  .from('service_categories')
+  .select('name')
+  .order('name');
+const services = (serviceCategories || []).map((s) => s.name);
 
-const sampleCompanies = [
-  { slug: 'shop-at-stop', name: 'Shop at Stop Restaurant Supply' },
-  { slug: 'russell-food-equipment', name: 'Russell Food Equipment' },
-  { slug: 'nella-cutlery', name: 'Nella Cutlery' },
-  { slug: 'hendrix-restaurant-equipment', name: 'Hendrix Restaurant Equipment' },
-  { slug: 'wd-colledge', name: 'W.D. Colledge' },
-];
+const { data: companiesData } = await supabase
+  .from('companies')
+  .select('id, name')
+  .order('ranking_score', { ascending: false });
+const sampleCompanies = (companiesData || []).map((c) => ({ slug: c.id, name: c.name }));
 ---
 
 <Base

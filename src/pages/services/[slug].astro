@@ -1,86 +1,30 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { buildItemListSchema } from '../../lib/schema';
+import { supabase } from '../../lib/supabase';
 
-export function getStaticPaths() {
-  const services = [
-    { slug: 'design-and-technical-drawings', name: 'Design & Technical Drawings' },
-    { slug: 'equipment-financing', name: 'Equipment Financing' },
-    { slug: 'equipment-leasing', name: 'Equipment Leasing' },
-    { slug: 'commercial-equipment-procurement', name: 'Commercial Equipment Procurement' },
-    { slug: 'price-match', name: 'Price Match' },
-    { slug: 'account-management', name: 'Account Management' },
-    { slug: 'equipment-consulting', name: 'Equipment Consulting' },
-    { slug: 'restaurant-consulting', name: 'Restaurant Consulting' },
-    { slug: 'installation-services', name: 'Installation Services' },
-  ];
+export async function getStaticPaths() {
+  const { data: services } = await supabase.from('service_categories').select('*');
+  const { data: allCompanies } = await supabase
+    .from('companies')
+    .select('*')
+    .order('ranking_score', { ascending: false });
 
-  const allCompanies = [
-    {
-      name: 'Shop at Stop Restaurant Supply',
-      slug: 'shop-at-stop',
-      description: 'Full-service commercial kitchen equipment supplier offering design, financing, procurement, and consulting for restaurants across Ontario.',
-      ranking_score: 9.4,
-      services: ['Commercial Equipment Procurement', 'Equipment Financing', 'Restaurant Consulting', 'Design & Technical Drawings'],
-      review_count: 47,
-      avg_rating: 4.8,
-      city: 'Toronto',
-      is_featured: true,
-    },
-    {
-      name: 'Russell Food Equipment',
-      slug: 'russell-food-equipment',
-      description: 'Commercial kitchen equipment dealer serving the Greater Toronto Area with new and used equipment, installation, and maintenance services.',
-      ranking_score: 7.8,
-      services: ['Commercial Equipment Procurement', 'Installation Services', 'Equipment Consulting'],
-      review_count: 23,
-      avg_rating: 4.3,
-      city: 'Toronto',
-      is_featured: false,
-    },
-    {
-      name: 'Nella Cutlery',
-      slug: 'nella-cutlery',
-      description: 'Restaurant and commercial kitchen equipment supplier with an extensive showroom and online store, serving Ontario since 1978.',
-      ranking_score: 7.2,
-      services: ['Commercial Equipment Procurement', 'Price Match', 'Equipment Consulting'],
-      review_count: 31,
-      avg_rating: 4.1,
-      city: 'Toronto',
-      is_featured: false,
-    },
-    {
-      name: 'Hendrix Restaurant Equipment',
-      slug: 'hendrix-restaurant-equipment',
-      description: 'National foodservice equipment distributor offering design, equipment supply, installation, and project management for commercial kitchens.',
-      ranking_score: 6.9,
-      services: ['Design & Technical Drawings', 'Commercial Equipment Procurement', 'Account Management'],
-      review_count: 18,
-      avg_rating: 4.0,
-      city: 'Mississauga',
-      is_featured: false,
-    },
-    {
-      name: 'W.D. Colledge',
-      slug: 'wd-colledge',
-      description: 'Foodservice equipment sales and distribution company representing leading manufacturers across Canada.',
-      ranking_score: 6.5,
-      services: ['Commercial Equipment Procurement', 'Equipment Consulting'],
-      review_count: 12,
-      avg_rating: 3.9,
-      city: 'Brampton',
-      is_featured: false,
-    },
-  ];
-
-  return services.map((service) => {
-    const filtered = allCompanies
-      .filter((c) => c.services.includes(service.name))
-      .sort((a, b) => b.ranking_score - a.ranking_score);
-
+  return (services || []).map((service) => {
+    const filtered = (allCompanies || []).filter((c) =>
+      c.services.includes(service.name)
+    );
     return {
       params: { slug: service.slug },
-      props: { serviceName: service.name, companies: filtered },
+      props: {
+        serviceName: service.name,
+        companies: filtered.map((c) => ({
+          ...c,
+          city: c.address?.city || '',
+          review_count: 0,
+          avg_rating: 0,
+        })),
+      },
     };
   });
 }
@@ -89,7 +33,7 @@ const { slug } = Astro.params;
 const { serviceName, companies } = Astro.props;
 
 const itemListSchema = buildItemListSchema(
-  companies.map((c: any) => ({ ...c, id: c.slug, logo_url: null, website_url: null, phone: null, email: null, address: { street: '', city: c.city, province: 'ON', postal_code: '' }, ranking_breakdown: { service_range: 0, customer_reviews: 0, industry_experience: 0, response_time: 0, pricing_transparency: 0, certifications: 0 }, faq: [], created_at: '', updated_at: '' })),
+  companies,
   `Best ${serviceName} Suppliers in Canada`,
   `https://kitchenequipment.ca/services/${slug}`
 );

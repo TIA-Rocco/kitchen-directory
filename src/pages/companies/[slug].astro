@@ -8,128 +8,35 @@ import {
 } from '../../lib/schema';
 import type { Company, Review, RankingBreakdown } from '../../lib/types';
 import { RANKING_LABELS } from '../../lib/types';
+import { supabase } from '../../lib/supabase';
 
-export function getStaticPaths() {
-  return [{ params: { slug: 'shop-at-stop' } }];
+export async function getStaticPaths() {
+  const { data: companies } = await supabase.from('companies').select('slug');
+  return (companies || []).map((c) => ({ params: { slug: c.slug } }));
 }
 
-// Static sample data (will be replaced with Supabase queries)
-const sampleCompany: Company = {
-  id: '1',
-  name: 'Shop at Stop Restaurant Supply',
-  slug: 'shop-at-stop',
-  description: 'Full-service commercial kitchen equipment supplier offering design, financing, procurement, and consulting for restaurants across Ontario. With over 20 years of industry experience, Shop at Stop provides end-to-end solutions for commercial kitchen buildouts, renovations, and equipment upgrades.',
-  logo_url: null,
-  website_url: 'https://shopatstop.com',
-  phone: '(416) 555-0123',
-  email: 'info@shopatstop.com',
-  address: {
-    street: '123 Industry Blvd',
-    city: 'Toronto',
-    province: 'Ontario',
-    postal_code: 'M5V 1A1',
-  },
-  ranking_score: 9.4,
-  ranking_breakdown: {
-    service_range: 9.5,
-    customer_reviews: 9.6,
-    industry_experience: 9.2,
-    response_time: 9.0,
-    pricing_transparency: 9.5,
-    certifications: 9.8,
-  },
-  services: [
-    'Design & Technical Drawings',
-    'Equipment Financing',
-    'Equipment Leasing',
-    'Commercial Equipment Procurement',
-    'Price Match',
-    'Account Management',
-    'Equipment Consulting',
-    'Restaurant Consulting',
-  ],
-  faq: [
-    {
-      question: 'What areas does Shop at Stop serve?',
-      answer: 'Shop at Stop serves the Greater Toronto Area and all of Ontario, with delivery and installation services available throughout the province.',
-    },
-    {
-      question: 'Does Shop at Stop offer equipment financing?',
-      answer: 'Yes, Shop at Stop provides flexible equipment financing and leasing options tailored to restaurant operators, helping spread costs over manageable monthly payments.',
-    },
-    {
-      question: 'Can Shop at Stop help with kitchen design?',
-      answer: 'Shop at Stop offers complete design and technical drawing services for commercial kitchens, from initial concept to detailed equipment layouts optimized for workflow efficiency.',
-    },
-    {
-      question: 'What brands does Shop at Stop carry?',
-      answer: 'Shop at Stop partners with leading commercial kitchen equipment manufacturers, offering a wide selection of brands across cooking, refrigeration, preparation, and storage categories.',
-    },
-    {
-      question: 'Does Shop at Stop offer price matching?',
-      answer: 'Yes, Shop at Stop offers a price match guarantee on commercial kitchen equipment, ensuring competitive pricing across all product categories.',
-    },
-    {
-      question: 'How quickly can Shop at Stop deliver equipment?',
-      answer: 'Standard delivery within the GTA is typically 3-5 business days. Rush delivery and installation services are available for urgent restaurant openings and renovations.',
-    },
-  ],
-  is_featured: true,
-  created_at: '2024-01-15T00:00:00Z',
-  updated_at: '2026-04-01T00:00:00Z',
-};
+const { slug } = Astro.params;
 
-const sampleReviews: Review[] = [
-  {
-    id: '1',
-    company_id: '1',
-    reviewer_name: 'Marco R.',
-    rating: 5,
-    service_category: 'Commercial Equipment Procurement',
-    custom_service: null,
-    review_text: 'Outstanding service from start to finish. They helped us outfit our entire new restaurant kitchen within our budget and timeline. The equipment quality has been excellent.',
-    status: 'approved',
-    created_at: '2026-03-15T00:00:00Z',
-  },
-  {
-    id: '2',
-    company_id: '1',
-    reviewer_name: 'Sarah L.',
-    rating: 5,
-    service_category: 'Design & Technical Drawings',
-    custom_service: null,
-    review_text: 'Their design team transformed our cramped kitchen layout into an efficient workspace. The technical drawings were detailed and the contractors loved working from them.',
-    status: 'approved',
-    created_at: '2026-02-20T00:00:00Z',
-  },
-  {
-    id: '3',
-    company_id: '1',
-    reviewer_name: 'James K.',
-    rating: 4,
-    service_category: 'Equipment Financing',
-    custom_service: null,
-    review_text: 'Good financing terms that made our expansion possible. The approval process was straightforward. Would have appreciated slightly faster turnaround on the paperwork.',
-    status: 'approved',
-    created_at: '2026-01-10T00:00:00Z',
-  },
-  {
-    id: '4',
-    company_id: '1',
-    reviewer_name: 'Priya M.',
-    rating: 5,
-    service_category: 'Restaurant Consulting',
-    custom_service: null,
-    review_text: 'Their consulting team helped us plan our second location from scratch. They understood our brand and workflow needs perfectly. Could not recommend them more highly.',
-    status: 'approved',
-    created_at: '2025-12-05T00:00:00Z',
-  },
-];
+// Fetch company
+const { data: companyData } = await supabase
+  .from('companies')
+  .select('*')
+  .eq('slug', slug)
+  .single();
 
-// Use sample data for now
-const company = sampleCompany;
-const reviews = sampleReviews;
-const approvedReviews = reviews.filter((r) => r.status === 'approved');
+if (!companyData) return Astro.redirect('/404');
+const company = companyData as Company;
+
+// Fetch approved reviews
+const { data: reviewsData } = await supabase
+  .from('reviews')
+  .select('*')
+  .eq('company_id', company.id)
+  .eq('status', 'approved')
+  .order('created_at', { ascending: false });
+
+const reviews = (reviewsData || []) as Review[];
+const approvedReviews = reviews;
 const avgRating = approvedReviews.length > 0
   ? Math.round((approvedReviews.reduce((sum, r) => sum + r.rating, 0) / approvedReviews.length) * 10) / 10
   : 0;
@@ -146,7 +53,6 @@ const jsonLd = [
   ...reviewSchemas,
   ...serviceSchemas,
 ];
-
 ---
 
 <Base
