@@ -1,6 +1,7 @@
 export const prerender = false;
 
 import type { APIRoute } from 'astro';
+import { supabase } from '../../lib/supabase';
 
 export const POST: APIRoute = async ({ request, redirect }) => {
   const formData = await request.formData();
@@ -62,16 +63,23 @@ export const POST: APIRoute = async ({ request, redirect }) => {
     });
   }
 
-  // Log the submission
-  console.log('Review submission received:', {
+  // Insert into Supabase
+  const { error } = await supabase.from('reviews').insert({
     company_id,
     reviewer_name,
     rating: ratingNum,
     service_category,
     custom_service,
     review_text,
-    submitted_at: new Date().toISOString(),
   });
+
+  if (error) {
+    console.error('Supabase insert error:', error);
+    return new Response(JSON.stringify({ error: 'Failed to submit review. Please try again.' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 
   return redirect('/thank-you', 302);
 };

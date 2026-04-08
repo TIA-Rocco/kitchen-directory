@@ -1,78 +1,51 @@
 ---
 import Base from '../layouts/Base.astro';
-import { buildWebSiteSchema, buildOrganizationSchema } from '../lib/schema';
+import { buildWebSiteSchema, buildOrganizationSchema, buildItemListSchema } from '../lib/schema';
+import { supabase } from '../lib/supabase';
 
-const jsonLd = [buildWebSiteSchema(), buildOrganizationSchema()];
+// Fetch companies from Supabase, sorted by ranking
+const { data: companiesRaw } = await supabase
+  .from('companies')
+  .select('*')
+  .order('ranking_score', { ascending: false });
 
-const sampleCompanies = [
-  {
-    name: 'Shop at Stop Restaurant Supply',
-    slug: 'shop-at-stop',
-    description: 'Full-service commercial kitchen equipment supplier offering design, financing, procurement, and consulting for restaurants across Ontario.',
-    ranking_score: 9.4,
-    services: ['Commercial Equipment Procurement', 'Equipment Financing', 'Restaurant Consulting', 'Design & Technical Drawings'],
-    review_count: 47,
-    avg_rating: 4.8,
-    city: 'Toronto',
-    is_featured: true,
-  },
-  {
-    name: 'Russell Food Equipment',
-    slug: 'russell-food-equipment',
-    description: 'Commercial kitchen equipment dealer serving the Greater Toronto Area with new and used equipment, installation, and maintenance services.',
-    ranking_score: 7.8,
-    services: ['Commercial Equipment Procurement', 'Installation Services', 'Equipment Consulting'],
-    review_count: 23,
-    avg_rating: 4.3,
-    city: 'Toronto',
-    is_featured: false,
-  },
-  {
-    name: 'Nella Cutlery',
-    slug: 'nella-cutlery',
-    description: 'Restaurant and commercial kitchen equipment supplier with an extensive showroom and online store, serving Ontario since 1978.',
-    ranking_score: 7.2,
-    services: ['Commercial Equipment Procurement', 'Price Match', 'Equipment Consulting'],
-    review_count: 31,
-    avg_rating: 4.1,
-    city: 'Toronto',
-    is_featured: false,
-  },
-  {
-    name: 'Hendrix Restaurant Equipment',
-    slug: 'hendrix-restaurant-equipment',
-    description: 'National foodservice equipment distributor offering design, equipment supply, installation, and project management for commercial kitchens.',
-    ranking_score: 6.9,
-    services: ['Design & Technical Drawings', 'Commercial Equipment Procurement', 'Account Management'],
-    review_count: 18,
-    avg_rating: 4.0,
-    city: 'Mississauga',
-    is_featured: false,
-  },
-  {
-    name: 'W.D. Colledge',
-    slug: 'wd-colledge',
-    description: 'Foodservice equipment sales and distribution company representing leading manufacturers across Canada.',
-    ranking_score: 6.5,
-    services: ['Commercial Equipment Procurement', 'Equipment Consulting'],
-    review_count: 12,
-    avg_rating: 3.9,
-    city: 'Brampton',
-    is_featured: false,
-  },
-];
+// Fetch review stats per company
+const { data: reviewStats } = await supabase
+  .from('reviews')
+  .select('company_id, rating')
+  .eq('status', 'approved');
 
-const services = [
-  'All Services',
-  'Commercial Equipment Procurement',
-  'Equipment Financing',
-  'Restaurant Consulting',
-  'Design & Technical Drawings',
-  'Equipment Leasing',
-  'Price Match',
-  'Account Management',
-  'Equipment Consulting',
-  'Installation Services',
+// Compute review counts and averages
+const reviewMap = new Map<string, { count: number; sum: number }>();
+for (const r of reviewStats || []) {
+  const existing = reviewMap.get(r.company_id) || { count: 0, sum: 0 };
+  existing.count++;
+  existing.sum += r.rating;
+  reviewMap.set(r.company_id, existing);
+}
+
+const sampleCompanies = (companiesRaw || []).map((c) => {
+  const stats = reviewMap.get(c.id) || { count: 0, sum: 0 };
+  return {
+    ...c,
+    review_count: stats.count,
+    avg_rating: stats.count > 0 ? Math.round((stats.sum / stats.count) * 10) / 10 : 0,
+    city: c.address?.city || '',
+  };
+});
+
+// Fetch service categories
+const { data: serviceCategories } = await supabase
+  .from('service_categories')
+  .select('name, slug')
+  .order('name');
+
+const services = ['All Services', ...(serviceCategories || []).map((s) => s.name)];
+
+const jsonLd = [
+  buildWebSiteSchema(),
+  buildOrganizationSchema(),
+  buildItemListSchema(sampleCompanies, 'Top Commercial Kitchen Equipment Suppliers in Canada', 'https://kitchenequipment.ca'),
 ];
 ---
 

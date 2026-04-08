@@ -1,6 +1,7 @@
 export const prerender = false;
 
 import type { APIRoute } from 'astro';
+import { supabase } from '../../lib/supabase';
 
 export const POST: APIRoute = async ({ request, redirect }) => {
   const formData = await request.formData();
@@ -46,15 +47,22 @@ export const POST: APIRoute = async ({ request, redirect }) => {
     });
   }
 
-  // Log the submission
-  console.log('Contact submission received:', {
+  // Insert into Supabase
+  const { error } = await supabase.from('contact_submissions').insert({
     name,
     email,
     type,
     company_name,
     message,
-    submitted_at: new Date().toISOString(),
   });
+
+  if (error) {
+    console.error('Supabase insert error:', error);
+    return new Response(JSON.stringify({ error: 'Failed to submit. Please try again.' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 
   return redirect('/thank-you', 302);
 };
