@@ -1,0 +1,147 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base
+  title="Privacy Policy"
+  description="Privacy policy for kitchenequipment.ca. Learn how we collect, use, and protect your personal information in compliance with Canadian privacy law."
+>
+  <header class="border-b border-neutral-950/5 bg-white">
+    <nav class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+      <a href="/" aria-label="Homepage" class="flex items-center gap-2">
+        <img src="https://assets.ui.sh/marks/1.svg?color=emerald-600&text=KE&textColor=neutral-900&font=inter" alt="Kitchen Equipment Canada" class="h-8" />
+        <span class="text-lg font-semibold tracking-tight">KitchenEquipment.ca</span>
+      </a>
+      <div class="flex items-center gap-6">
+        <a href="/submit-review" class="text-sm font-medium text-neutral-600 hover:text-neutral-900">Submit a Review</a>
+        <a href="/contact" class="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="py-16">
+    <div class="mx-auto max-w-3xl px-6">
+      <a href="/" class="text-sm text-neutral-500 hover:text-neutral-700">&larr; Back to directory</a>
+
+      <h1 class="mt-6 text-3xl font-semibold tracking-tight">Privacy Policy</h1>
+      <p class="mt-2 text-sm text-neutral-400">Last updated: April 8, 2026</p>
+
+      <div class="mt-10 space-y-10 text-sm leading-relaxed text-neutral-600">
+        <section>
+          <h2 class="text-lg font-semibold text-neutral-900">1. Introduction</h2>
+          <p class="mt-3">Kitchen Equipment Canada ("we", "us", or "our") operates kitchenequipment.ca, a directory and review platform for commercial kitchen equipment suppliers in Canada. We are committed to protecting your privacy and handling your personal information in accordance with the <em>Personal Information Protection and Electronic Documents Act</em> (PIPEDA) and applicable Canadian privacy legislation.</p>
+          <p class="mt-3">This Privacy Policy explains what information we collect, how we use and store it, and your rights regarding your personal data.</p>
+        </section>
+
+        <section>
+          <h2 class="text-lg font-semibold text-neutral-900">2. Information We Collect</h2>
+
+          <h3 class="mt-4 font-semibold text-neutral-800">2.1 Information You Provide</h3>
+          <p class="mt-2">When you use our site, you may voluntarily provide us with the following personal information:</p>
+          <ul class="mt-2 list-disc space-y-1 pl-5">
+            <li><strong>Review submissions:</strong> Your name (or display name), the rating you give, the service category, and the text of your review.</li>
+            <li><strong>Contact form submissions:</strong> Your name, email address, company name (if applicable), the reason for contact, and your message.</li>
+          </ul>
+
+          <h3 class="mt-4 font-semibold text-neutral-800">2.2 Information Collected Automatically</h3>
+          <p class="mt-2">We use Vercel Analytics to collect anonymized, aggregate usage data about how visitors interact with our site. This may include:</p>
+          <ul class="mt-2 list-disc space-y-1 pl-5">
+            <li>Pages visited and time spent on pages</li>
+            <li>Referring URLs and search terms</li>
+            <li>Browser type, device type, and operating system</li>
+            <li>Country and region-level location (not precise geolocation)</li>
+          </ul>
+          <p class="mt-2">Vercel Analytics is privacy-focused and does not use cookies for tracking. No personally identifiable information is collected through analytics.</p>
+        </section>
+
+        <section>
+          <h2 class="text-lg font-semibold text-neutral-900">3. Cookies</h2>
+          <p class="mt-3">Our site uses minimal cookies necessary for site functionality. Vercel Analytics does not set tracking cookies. We do not use third-party advertising cookies or cross-site tracking technologies.</p>
+          <p class="mt-3">If we introduce cookies in the future, we will update this policy and provide appropriate notice and consent mechanisms.</p>
+        </section>
+
+        <section>
+          <h2 class="text-lg font-semibold text-neutral-900">4. How We Use Your Information</h2>
+          <p class="mt-3">We use the information we collect for the following purposes:</p>
+          <ul class="mt-2 list-disc space-y-1 pl-5">
+            <li>To publish reviews that help other users compare kitchen equipment suppliers</li>
+            <li>To respond to your inquiries submitted through our contact form</li>
+            <li>To process company profile update requests</li>
+            <li>To moderate submitted reviews for quality and appropriateness</li>
+            <li>To improve our website and user experience through aggregate analytics</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 class="text-lg font-semibold text-neutral-900">5. Data Processing and Storage</h2>
+          <p class="mt-3">Form submission data is stored using <strong>Supabase</strong>, a cloud database platform, which acts as our data processor. Supabase stores data on secure, SOC 2 Type II compliant infrastructure. Data may be stored on servers located in the United States or other jurisdictions where Supabase operates.</p>
+          <p class="mt-3">Our website is hosted on <strong>Vercel</strong>, which may process requests through their global edge network.</p>
+          <p class="mt-3">We take reasonable technical and organizational measures to protect your personal information against unauthorized access, loss, or misuse.</p>
+        </section>
+
+        <section>
+          <h2 class="text-lg font-semibold text-neutral-900">6. Data Sharing</h2>
+          <p class="mt-3">We do not sell, rent, or trade your personal information to third parties. We may share your information only in the following circumstances:</p>
+          <ul class="mt-2 list-disc space-y-1 pl-5">
+            <li><strong>Published reviews:</strong> Your display name and review content are published publicly on the site.</li>
+            <li><strong>Service providers:</strong> With Supabase (data storage) and Vercel (hosting) as necessary to operate the site.</li>
+            <li><strong>Legal requirements:</strong> If required by law, court order, or governmental authority.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 class="text-lg font-semibold text-neutral-900">7. Data Retention</h2>
+          <p class="mt-3">We retain your personal information for as long as necessary to fulfil the purposes described in this policy:</p>
+          <ul class="mt-2 list-disc space-y-1 pl-5">
+            <li><strong>Published reviews:</strong> Retained indefinitely as part of the public directory, unless you request removal.</li>
+            <li><strong>Contact form submissions:</strong> Retained for up to 24 months after the inquiry is resolved, then deleted.</li>
+            <li><strong>Rejected or pending reviews:</strong> Deleted within 90 days of the moderation decision.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 class="text-lg font-semibold text-neutral-900">8. Your Rights</h2>
+          <p class="mt-3">Under PIPEDA, you have the following rights with respect to your personal information:</p>
+          <ul class="mt-2 list-disc space-y-1 pl-5">
+            <li><strong>Access:</strong> You may request a copy of the personal information we hold about you.</li>
+            <li><strong>Correction:</strong> You may request that we correct inaccurate or incomplete information.</li>
+            <li><strong>Deletion:</strong> You may request that we delete your personal information, subject to any legal obligations to retain it.</li>
+            <li><strong>Withdrawal of consent:</strong> You may withdraw your consent to the collection and use of your information at any time, subject to legal or contractual restrictions.</li>
+          </ul>
+          <p class="mt-3">To exercise any of these rights, please contact us at the address below. We will respond to your request within 30 days.</p>
+        </section>
+
+        <section>
+          <h2 class="text-lg font-semibold text-neutral-900">9. Children's Privacy</h2>
+          <p class="mt-3">Our site is not directed at individuals under the age of 16. We do not knowingly collect personal information from children. If you believe we have collected information from a child, please contact us and we will promptly delete it.</p>
+        </section>
+
+        <section>
+          <h2 class="text-lg font-semibold text-neutral-900">10. Changes to This Policy</h2>
+          <p class="mt-3">We may update this Privacy Policy from time to time to reflect changes in our practices or applicable laws. We will post the updated policy on this page and update the "Last updated" date. We encourage you to review this policy periodically.</p>
+        </section>
+
+        <section>
+          <h2 class="text-lg font-semibold text-neutral-900">11. Contact Us</h2>
+          <p class="mt-3">If you have questions about this Privacy Policy or wish to exercise your privacy rights, please contact us:</p>
+          <div class="mt-3 rounded-xl bg-neutral-50 p-6">
+            <p><strong>Kitchen Equipment Canada</strong></p>
+            <p class="mt-1">Email: <a href="mailto:info@kitchenequipment.ca" class="font-medium text-emerald-600 hover:text-emerald-500">info@kitchenequipment.ca</a></p>
+            <p class="mt-1">Website: <a href="https://kitchenequipment.ca" class="font-medium text-emerald-600 hover:text-emerald-500">kitchenequipment.ca</a></p>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer class="border-t border-neutral-950/5 py-10">
+    <div class="mx-auto max-w-7xl px-6 text-center text-sm text-neutral-500">
+      <p>kitchenequipment.ca. Independent commercial kitchen equipment supplier directory.</p>
+      <div class="mt-3 flex justify-center gap-6">
+        <a href="/privacy" class="font-normal hover:text-neutral-700">Privacy Policy</a>
+        <a href="/terms" class="font-normal hover:text-neutral-700">Terms of Service</a>
+        <a href="/contact" class="font-normal hover:text-neutral-700">Contact</a>
+      </div>
+    </div>
+  </footer>
+</Base>
