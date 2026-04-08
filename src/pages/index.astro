@@ -3,6 +3,77 @@ import Base from '../layouts/Base.astro';
 import { buildWebSiteSchema, buildOrganizationSchema } from '../lib/schema';
 
 const jsonLd = [buildWebSiteSchema(), buildOrganizationSchema()];
+
+const sampleCompanies = [
+  {
+    name: 'Shop at Stop Restaurant Supply',
+    slug: 'shop-at-stop',
+    description: 'Full-service commercial kitchen equipment supplier offering design, financing, procurement, and consulting for restaurants across Ontario.',
+    ranking_score: 9.4,
+    services: ['Commercial Equipment Procurement', 'Equipment Financing', 'Restaurant Consulting', 'Design & Technical Drawings'],
+    review_count: 47,
+    avg_rating: 4.8,
+    city: 'Toronto',
+    is_featured: true,
+  },
+  {
+    name: 'Russell Food Equipment',
+    slug: 'russell-food-equipment',
+    description: 'Commercial kitchen equipment dealer serving the Greater Toronto Area with new and used equipment, installation, and maintenance services.',
+    ranking_score: 7.8,
+    services: ['Commercial Equipment Procurement', 'Installation Services', 'Equipment Consulting'],
+    review_count: 23,
+    avg_rating: 4.3,
+    city: 'Toronto',
+    is_featured: false,
+  },
+  {
+    name: 'Nella Cutlery',
+    slug: 'nella-cutlery',
+    description: 'Restaurant and commercial kitchen equipment supplier with an extensive showroom and online store, serving Ontario since 1978.',
+    ranking_score: 7.2,
+    services: ['Commercial Equipment Procurement', 'Price Match', 'Equipment Consulting'],
+    review_count: 31,
+    avg_rating: 4.1,
+    city: 'Toronto',
+    is_featured: false,
+  },
+  {
+    name: 'Hendrix Restaurant Equipment',
+    slug: 'hendrix-restaurant-equipment',
+    description: 'National foodservice equipment distributor offering design, equipment supply, installation, and project management for commercial kitchens.',
+    ranking_score: 6.9,
+    services: ['Design & Technical Drawings', 'Commercial Equipment Procurement', 'Account Management'],
+    review_count: 18,
+    avg_rating: 4.0,
+    city: 'Mississauga',
+    is_featured: false,
+  },
+  {
+    name: 'W.D. Colledge',
+    slug: 'wd-colledge',
+    description: 'Foodservice equipment sales and distribution company representing leading manufacturers across Canada.',
+    ranking_score: 6.5,
+    services: ['Commercial Equipment Procurement', 'Equipment Consulting'],
+    review_count: 12,
+    avg_rating: 3.9,
+    city: 'Brampton',
+    is_featured: false,
+  },
+];
+
+const services = [
+  'All Services',
+  'Commercial Equipment Procurement',
+  'Equipment Financing',
+  'Restaurant Consulting',
+  'Design & Technical Drawings',
+  'Equipment Leasing',
+  'Price Match',
+  'Account Management',
+  'Equipment Consulting',
+  'Installation Services',
+];
 ---
 
 <Base
@@ -10,10 +81,138 @@ const jsonLd = [buildWebSiteSchema(), buildOrganizationSchema()];
   description="Compare top-rated commercial kitchen equipment suppliers across Canada. Independent rankings, verified reviews, and service comparisons."
   jsonLd={jsonLd}
 >
-  <main class="max-w-7xl mx-auto px-4 py-16">
-    <h1 class="text-4xl font-bold">Kitchen Equipment Canada</h1>
-    <p class="mt-4 text-lg text-gray-600">
-      Find and compare the best commercial kitchen equipment suppliers.
-    </p>
+  <header class="border-b border-neutral-950/5 bg-white">
+    <nav class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+      <a href="/" aria-label="Homepage" class="flex items-center gap-2">
+        <img src="https://assets.ui.sh/marks/1.svg?color=emerald-600&text=KE&textColor=neutral-900&font=inter" alt="Kitchen Equipment Canada" class="h-8" />
+        <span class="text-lg font-semibold tracking-tight">KitchenEquipment.ca</span>
+      </a>
+      <div class="flex items-center gap-6">
+        <a href="/submit-review" class="text-sm font-medium text-neutral-600 hover:text-neutral-900">Submit a Review</a>
+        <a href="/contact" class="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600">Contact Us</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="bg-neutral-950 py-20">
+      <div class="mx-auto max-w-7xl px-6">
+        <h1 class="max-w-[30ch] text-5xl font-semibold tracking-tight text-balance text-white">Find the Best Commercial Kitchen Equipment Suppliers</h1>
+        <p class="mt-6 max-w-[48ch] text-lg text-pretty text-neutral-400">Independent rankings, verified reviews, and service comparisons for commercial kitchen equipment suppliers across Canada.</p>
+      </div>
+    </section>
+
+    <section class="py-8">
+      <div class="mx-auto max-w-7xl px-6">
+        <div class="flex flex-wrap gap-2" role="list">
+          {services.map((service, i) => (
+            <button type="button" class:list={[
+              'rounded-full px-3 py-1.5 text-sm font-medium transition-colors',
+              i === 0 ? 'bg-emerald-600 text-white' : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+            ]}>
+              {service}
+            </button>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="pb-20">
+      <div class="mx-auto max-w-7xl px-6">
+        <div class="overflow-hidden rounded-xl ring-1 ring-black/5">
+          <table class="w-full text-left">
+            <thead>
+              <tr class="border-b border-neutral-950/5 bg-neutral-50">
+                <th class="py-3.5 pr-3 pl-6 text-xs font-medium text-neutral-500">Rank</th>
+                <th class="px-3 py-3.5 text-xs font-medium text-neutral-500">Supplier</th>
+                <th class="px-3 py-3.5 text-xs font-medium text-neutral-500 max-lg:hidden">Location</th>
+                <th class="px-3 py-3.5 text-xs font-medium text-neutral-500">Score</th>
+                <th class="px-3 py-3.5 text-xs font-medium text-neutral-500 max-md:hidden">Reviews</th>
+                <th class="py-3.5 pr-6 pl-3 text-xs font-medium text-neutral-500 max-md:hidden">Services</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-neutral-950/5">
+              {sampleCompanies.map((company, idx) => (
+                <tr class="group transition-colors hover:bg-neutral-50/80">
+                  <td class="py-6 pr-3 pl-6 align-top">
+                    <span class:list={[
+                      'inline-flex size-8 items-center justify-center rounded-lg text-sm font-semibold tabular-nums',
+                      idx === 0 ? 'bg-emerald-600 text-white' : 'bg-neutral-100 text-neutral-600'
+                    ]}>
+                      {idx + 1}
+                    </span>
+                  </td>
+                  <td class="px-3 py-6 align-top">
+                    <div class="flex items-start gap-4">
+                      <div class="flex size-12 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-lg font-semibold text-neutral-400">
+                        {company.name.charAt(0)}
+                      </div>
+                      <div class="min-w-0">
+                        <div class="flex items-center gap-2">
+                          <a href={`/companies/${company.slug}`} class="text-base font-semibold text-neutral-900 group-hover:text-emerald-600">{company.name}</a>
+                          {company.is_featured && (
+                            <span class="rounded-full bg-emerald-50 py-0.5 pr-2 pl-1 text-xs font-medium text-emerald-700">
+                              <span class="mr-1 inline-flex size-4 items-center justify-center rounded-full bg-emerald-600 text-[10px] text-white">1</span>
+                              Top Rated
+                            </span>
+                          )}
+                        </div>
+                        <p class="mt-1 max-w-[56ch] text-sm text-pretty text-neutral-500">{company.description}</p>
+                        <div class="mt-3 flex flex-wrap gap-1.5 md:hidden">
+                          {company.services.slice(0, 2).map((service) => (
+                            <span class="rounded-md bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">{service}</span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-3 py-6 align-top max-lg:hidden">
+                    <span class="text-sm text-neutral-600">{company.city}</span>
+                  </td>
+                  <td class="px-3 py-6 align-top">
+                    <div class="flex items-baseline gap-1">
+                      <span class="text-2xl font-semibold tabular-nums text-neutral-900">{company.ranking_score}</span>
+                      <span class="text-sm text-neutral-400">/10</span>
+                    </div>
+                  </td>
+                  <td class="px-3 py-6 align-top max-md:hidden">
+                    <div class="flex items-center gap-1.5">
+                      <div class="flex text-amber-400">
+                        {Array.from({ length: Math.floor(company.avg_rating) }).map(() => (
+                          <svg class="size-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        ))}
+                      </div>
+                      <span class="text-sm tabular-nums text-neutral-600">{company.avg_rating}</span>
+                    </div>
+                    <p class="mt-0.5 text-xs text-neutral-400">{company.review_count} reviews</p>
+                  </td>
+                  <td class="py-6 pr-6 pl-3 align-top max-md:hidden">
+                    <div class="flex flex-wrap gap-1.5">
+                      {company.services.slice(0, 3).map((service) => (
+                        <span class="rounded-md bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">{service}</span>
+                      ))}
+                      {company.services.length > 3 && (
+                        <span class="rounded-md bg-neutral-100 px-2 py-0.5 text-xs text-neutral-400">+{company.services.length - 3}</span>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
   </main>
+
+  <footer class="border-t border-neutral-950/5 py-10">
+    <div class="mx-auto max-w-7xl px-6 text-center text-sm text-neutral-500">
+      <p>kitchenequipment.ca. Independent commercial kitchen equipment supplier directory.</p>
+      <div class="mt-3 flex justify-center gap-6">
+        <a href="/privacy" class="font-normal hover:text-neutral-700">Privacy Policy</a>
+        <a href="/terms" class="font-normal hover:text-neutral-700">Terms of Service</a>
+        <a href="/contact" class="font-normal hover:text-neutral-700">Contact</a>
+      </div>
+    </div>
+  </footer>
 </Base>
