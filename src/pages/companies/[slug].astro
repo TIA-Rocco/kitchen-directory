@@ -9,6 +9,10 @@ import {
 import type { Company, Review, RankingBreakdown } from '../../lib/types';
 import { RANKING_LABELS } from '../../lib/types';
 
+export function getStaticPaths() {
+  return [{ params: { slug: 'shop-at-stop' } }];
+}
+
 // Static sample data (will be replaced with Supabase queries)
 const sampleCompany: Company = {
   id: '1',
@@ -143,9 +147,6 @@ const jsonLd = [
   ...serviceSchemas,
 ];
 
-export function getStaticPaths() {
-  return [{ params: { slug: 'shop-at-stop' } }];
-}
 ---
 
 <Base
