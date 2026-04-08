@@ -1,0 +1,19 @@
+---
+import Base from '../layouts/Base.astro';
+import { buildWebSiteSchema, buildOrganizationSchema } from '../lib/schema';
+
+const jsonLd = [buildWebSiteSchema(), buildOrganizationSchema()];
+---
+
+<Base
+  title="Find Commercial Kitchen Equipment Suppliers in Canada"
+  description="Compare top-rated commercial kitchen equipment suppliers across Canada. Independent rankings, verified reviews, and service comparisons."
+  jsonLd={jsonLd}
+>
+  <main class="max-w-7xl mx-auto px-4 py-16">
+    <h1 class="text-4xl font-bold">Kitchen Equipment Canada</h1>
+    <p class="mt-4 text-lg text-gray-600">
+      Find and compare the best commercial kitchen equipment suppliers.
+    </p>
+  </main>
+</Base>
