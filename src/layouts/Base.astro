@@ -13,9 +13,7 @@ interface Props {
 const { title, description, ogImage, canonicalUrl, jsonLd } = Astro.props;
 const canonical = canonicalUrl || Astro.url.href;
 const siteName = 'Kitchen Equipment Canada';
-const vercelUrl = import.meta.env.VERCEL_URL;
-const assetOrigin = vercelUrl ? `https://${vercelUrl}` : canonical;
-const resolvedOgImage = new URL(ogImage ?? '/og-image.png', assetOrigin).href;
+const resolvedOgImage = new URL(ogImage ?? '/og-image.png', canonical).href;
 const ogImageAlt = `${siteName}: ${title}`;
 ---
 
