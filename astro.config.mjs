@@ -5,7 +5,7 @@ import vercel from '@astrojs/vercel';
 import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
-  site: 'https://kitchenequipment.ca',
+  site: 'https://kitchen-directory.vercel.app',
   output: 'static',
   vite: {
     plugins: [tailwindcss()],
