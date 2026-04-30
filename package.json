@@ -17,6 +17,7 @@
     "@astrojs/vercel": "^10.0.4",
     "@supabase/supabase-js": "^2.102.1",
     "@tailwindcss/vite": "^4.2.2",
+    "@vercel/analytics": "^2.0.1",
     "astro": "^6.1.5",
     "isomorphic-dompurify": "^3.11.0",
     "marked": "^18.0.2",
