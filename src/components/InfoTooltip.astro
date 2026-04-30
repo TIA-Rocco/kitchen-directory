@@ -1,0 +1,93 @@
+---
+interface Props {
+  label?: string;
+  size?: 'sm' | 'md';
+}
+
+const { label = 'More information', size = 'sm' } = Astro.props;
+const id = `tt-${Math.random().toString(36).slice(2, 10)}`;
+const iconSize = size === 'sm' ? 'size-4' : 'size-5';
+---
+
+<span class="info-tooltip relative inline-flex align-middle" data-info-tooltip>
+  <button
+    type="button"
+    aria-label={label}
+    aria-describedby={id}
+    aria-expanded="false"
+    class={`info-tooltip__trigger inline-flex ${iconSize} cursor-help items-center justify-center rounded-full text-neutral-400 transition-colors hover:text-neutral-700 focus-visible:text-neutral-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600`}
+  >
+    <svg class={iconSize} fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+    </svg>
+  </button>
+
+  <span
+    id={id}
+    role="tooltip"
+    class="info-tooltip__panel pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-72 -translate-x-1/2 rounded-lg bg-neutral-900 px-4 py-3 text-left text-xs text-neutral-100 opacity-0 shadow-lg ring-1 ring-black/10 transition-opacity duration-150"
+  >
+    <slot />
+  </span>
+</span>
+
+<style>
+  /* Desktop hover/focus reveal */
+  @media (hover: hover) {
+    .info-tooltip:hover .info-tooltip__panel,
+    .info-tooltip:focus-within .info-tooltip__panel {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+
+  /* Tap-to-toggle reveal (mobile + any open state set by JS) */
+  .info-tooltip[data-open='true'] .info-tooltip__panel {
+    opacity: 1;
+    pointer-events: auto;
+  }
+</style>
+
+<script>
+  function initInfoTooltips() {
+    const tips = document.querySelectorAll<HTMLElement>('[data-info-tooltip]');
+    tips.forEach((tip) => {
+      if (tip.dataset.bound === 'true') return;
+      tip.dataset.bound = 'true';
+
+      const trigger = tip.querySelector<HTMLButtonElement>('.info-tooltip__trigger');
+      if (!trigger) return;
+
+      const close = () => {
+        tip.dataset.open = 'false';
+        trigger.setAttribute('aria-expanded', 'false');
+      };
+      const open = () => {
+        tip.dataset.open = 'true';
+        trigger.setAttribute('aria-expanded', 'true');
+      };
+      const toggle = () => {
+        tip.dataset.open === 'true' ? close() : open();
+      };
+
+      trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggle();
+      });
+
+      trigger.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          close();
+          trigger.blur();
+        }
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!tip.contains(e.target as Node)) close();
+      });
+    });
+  }
+
+  initInfoTooltips();
+  document.addEventListener('astro:page-load', initInfoTooltips);
+</script>

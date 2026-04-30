@@ -145,3 +145,24 @@ npm test         # Run Vitest unit tests (20 tests)
 9. 7 real Ontario companies seeded with real data
 10. 20 Vitest unit tests (all passing)
 11. CLAUDE.md + deploy docs
+
+## What Was Built (Session: 2026-04-30, branch RoccoBMB/partners-blog)
+1. **Brand Partners** on company profiles
+   - Migration `003_partners.sql`: `partners` JSONB column on `companies` (`[{name, logo_url?, url?}]`)
+   - Section on `/companies/[slug]` between Services Offered and Customer Reviews (conditional on partners.length > 0)
+   - LocalBusiness JSON-LD extended with `brand` array
+   - Seeded Shop at Stop with Vitamix, Hobart, Robot Coupe partners
+2. **Blog system** (Supabase-authored, markdown rendered)
+   - Migration `004_blog.sql`: `blog_posts` table (title, slug, body, excerpt, featured_image_url, author, category, linked_companies[], meta_title, meta_description, status, published_at) + RLS + deploy-hook trigger
+   - `/blog` index page (SSG, lists published posts) with Blog JSON-LD
+   - `/blog/[slug]` post page (SSG, getStaticPaths) with sanitized markdown body, "Featured Suppliers" sidebar from linked_companies, BlogPosting JSON-LD
+   - `src/lib/markdown.ts` — `marked` + `isomorphic-dompurify` for safe rendering
+   - "Blog" link added to top-nav across all 7 pages
+3. **Rating Breakdown tooltip**
+   - New `src/components/InfoTooltip.astro` (first component) — accessible, keyboard-friendly, hover (desktop) + tap-to-toggle (mobile), Escape to close
+   - Integrated next to "Rating Breakdown" heading on company profile, lists 6 criteria + weights
+4. **Tests**: 19 new tests (39 total, all passing) — schema builders + markdown sanitization
+5. **Forum**: explicitly dropped, revisit Q4 2026
+
+### Migrations to apply
+After pulling: apply `supabase/migrations/003_partners.sql` and `004_blog.sql` to the live Supabase project (via Supabase MCP, `supabase db push`, or paste into Dashboard SQL editor).

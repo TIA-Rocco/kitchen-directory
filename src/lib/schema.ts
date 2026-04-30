@@ -1,4 +1,4 @@
-import type { Company, Review, FaqItem, ServiceCategory } from './types';
+import type { Company, Review, FaqItem, BlogPost, Partner } from './types';
 
 export function buildLocalBusinessSchema(company: Company, reviews: Review[]) {
   const schema: Record<string, unknown> = {
@@ -29,7 +29,21 @@ export function buildLocalBusinessSchema(company: Company, reviews: Review[]) {
   const aggregateRating = buildAggregateRatingSchema(reviews);
   if (aggregateRating) schema.aggregateRating = aggregateRating;
 
+  if (company.partners && company.partners.length > 0) {
+    schema.brand = company.partners.map(buildBrandSchema);
+  }
+
   return schema;
+}
+
+export function buildBrandSchema(partner: Partner) {
+  const brand: Record<string, unknown> = {
+    '@type': 'Brand',
+    name: partner.name,
+  };
+  if (partner.url) brand.url = partner.url;
+  if (partner.logo_url) brand.logo = partner.logo_url;
+  return brand;
 }
 
 export function buildAggregateRatingSchema(reviews: Review[]) {
@@ -140,5 +154,77 @@ export function buildOrganizationSchema() {
     name: 'Kitchen Equipment Canada',
     url: 'https://kitchenequipment.ca',
     logo: 'https://kitchenequipment.ca/logo.svg',
+  };
+}
+
+export function buildBlogPostingSchema(
+  post: BlogPost,
+  linkedCompanies: Company[] = []
+) {
+  const url = `https://kitchenequipment.ca/blog/${post.slug}`;
+  const datePublished = post.published_at
+    ? post.published_at.split('T')[0]
+    : post.created_at.split('T')[0];
+
+  const schema: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    '@id': url,
+    headline: post.title,
+    url,
+    datePublished,
+    dateModified: post.updated_at.split('T')[0],
+    author: {
+      '@type': 'Organization',
+      name: post.author,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Kitchen Equipment Canada',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://kitchenequipment.ca/logo.svg',
+      },
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': url,
+    },
+  };
+
+  if (post.excerpt) schema.description = post.excerpt;
+  if (post.featured_image_url) schema.image = post.featured_image_url;
+  if (post.category) schema.articleSection = post.category;
+
+  if (linkedCompanies.length > 0) {
+    schema.mentions = linkedCompanies.map((c) => ({
+      '@type': 'LocalBusiness',
+      '@id': `https://kitchenequipment.ca/companies/${c.slug}`,
+      name: c.name,
+      url: `https://kitchenequipment.ca/companies/${c.slug}`,
+    }));
+  }
+
+  return schema;
+}
+
+export function buildBlogIndexSchema(posts: BlogPost[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Blog',
+    '@id': 'https://kitchenequipment.ca/blog',
+    url: 'https://kitchenequipment.ca/blog',
+    name: 'Kitchen Equipment Canada Blog',
+    description:
+      'Buying guides, reviews, and industry insights for commercial kitchen equipment buyers in Canada.',
+    blogPost: posts.map((post) => ({
+      '@type': 'BlogPosting',
+      '@id': `https://kitchenequipment.ca/blog/${post.slug}`,
+      headline: post.title,
+      url: `https://kitchenequipment.ca/blog/${post.slug}`,
+      datePublished: (post.published_at || post.created_at).split('T')[0],
+      ...(post.excerpt ? { description: post.excerpt } : {}),
+      ...(post.featured_image_url ? { image: post.featured_image_url } : {}),
+    })),
   };
 }

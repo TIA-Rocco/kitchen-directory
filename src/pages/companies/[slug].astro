@@ -7,8 +7,9 @@ import {
   buildServiceSchema,
 } from '../../lib/schema';
 import type { Company, Review, RankingBreakdown } from '../../lib/types';
-import { RANKING_LABELS } from '../../lib/types';
+import { RANKING_LABELS, RANKING_WEIGHTS } from '../../lib/types';
 import { supabase } from '../../lib/supabase';
+import InfoTooltip from '../../components/InfoTooltip.astro';
 
 export async function getStaticPaths() {
   const { data: companies } = await supabase.from('companies').select('slug');
@@ -67,6 +68,7 @@ const jsonLd = [
         <span class="text-lg font-semibold tracking-tight">KitchenEquipment.ca</span>
       </a>
       <div class="flex items-center gap-6">
+        <a href="/blog" class="text-sm font-medium text-neutral-600 hover:text-neutral-900">Blog</a>
         <a href="/submit-review" class="text-sm font-medium text-neutral-600 hover:text-neutral-900">Submit a Review</a>
         <a href="/contact" class="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600">Contact Us</a>
       </div>
@@ -119,7 +121,23 @@ const jsonLd = [
 
           <!-- Ranking Score -->
           <section>
-            <h2 class="text-lg font-semibold">Rating Breakdown</h2>
+            <h2 class="flex items-center gap-1.5 text-lg font-semibold">
+              Rating Breakdown
+              <InfoTooltip label="How ratings are calculated">
+                <p class="font-medium text-white">How we calculate ratings</p>
+                <p class="mt-1 text-neutral-300">
+                  Composite score from 6 weighted criteria, editorially assigned by our team:
+                </p>
+                <ul class="mt-2 space-y-1.5">
+                  {(Object.keys(RANKING_LABELS) as (keyof RankingBreakdown)[]).map((key) => (
+                    <li class="flex items-baseline justify-between gap-3">
+                      <span class="text-neutral-200">{RANKING_LABELS[key]}</span>
+                      <span class="shrink-0 tabular-nums text-neutral-400">{Math.round(RANKING_WEIGHTS[key] * 100)}%</span>
+                    </li>
+                  ))}
+                </ul>
+              </InfoTooltip>
+            </h2>
             <div class="mt-4 flex items-center gap-6">
               <div class="text-center">
                 <div class="text-5xl font-semibold tabular-nums text-neutral-900">{company.ranking_score}</div>
@@ -169,6 +187,52 @@ const jsonLd = [
               ))}
             </div>
           </section>
+
+          <!-- Brand Partners -->
+          {company.partners && company.partners.length > 0 && (
+            <section class="mt-12">
+              <h2 class="text-lg font-semibold">Brand Partners</h2>
+              <p class="mt-1 text-sm text-neutral-500">Brands {company.name} carries or has a favourable relationship with.</p>
+              <ul class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {company.partners.map((partner) => {
+                  const card = (
+                    <div class="flex h-full items-center gap-3 rounded-lg border border-neutral-200 bg-white p-3 transition-colors hover:border-emerald-300 hover:bg-emerald-50/40">
+                      {partner.logo_url ? (
+                        <img
+                          src={partner.logo_url}
+                          alt={`${partner.name} logo`}
+                          loading="lazy"
+                          class="h-8 w-8 shrink-0 rounded object-contain"
+                        />
+                      ) : (
+                        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-neutral-100 text-xs font-semibold text-neutral-500">
+                          {partner.name.charAt(0)}
+                        </div>
+                      )}
+                      <span class="min-w-0 truncate text-sm font-medium text-neutral-900">{partner.name}</span>
+                    </div>
+                  );
+                  return (
+                    <li>
+                      {partner.url ? (
+                        <a
+                          href={partner.url}
+                          target="_blank"
+                          rel="noopener nofollow"
+                          class="block h-full"
+                          aria-label={`Visit ${partner.name} (opens in new tab)`}
+                        >
+                          {card}
+                        </a>
+                      ) : (
+                        card
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          )}
 
           <!-- Reviews -->
           <section class="mt-12">
