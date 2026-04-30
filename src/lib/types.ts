@@ -17,6 +17,7 @@ export interface Company {
   ranking_breakdown: RankingBreakdown;
   services: string[];
   faq: FaqItem[];
+  partners: Partner[];
   is_featured: boolean;
   created_at: string;
   updated_at: string;
@@ -34,6 +35,12 @@ export interface RankingBreakdown {
 export interface FaqItem {
   question: string;
   answer: string;
+}
+
+export interface Partner {
+  name: string;
+  logo_url?: string | null;
+  url?: string | null;
 }
 
 export interface Review {
@@ -63,6 +70,24 @@ export interface ContactSubmission {
   company_name: string | null;
   message: string;
   created_at: string;
+}
+
+export interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  body: string;
+  excerpt: string | null;
+  featured_image_url: string | null;
+  author: string;
+  category: string | null;
+  linked_companies: string[];
+  meta_title: string | null;
+  meta_description: string | null;
+  status: 'draft' | 'published';
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export const RANKING_WEIGHTS = {
