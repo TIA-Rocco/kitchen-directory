@@ -1,0 +1,84 @@
+---
+export const prerender = false;
+
+import Admin from '../../../layouts/Admin.astro';
+import { supabaseAdmin } from '../../../lib/supabase-server';
+
+const { data: submissions } = await supabaseAdmin
+  .from('supplier_submissions')
+  .select('id, name, address, services, submitted_by_name, submitted_by_email, status, created_at')
+  .in('status', ['pending', 'needs_info'])
+  .order('created_at', { ascending: false });
+
+function fmt(ts: string) {
+  return new Date(ts).toLocaleDateString('en-CA', { dateStyle: 'medium' });
+}
+
+function city(addr: any): string {
+  if (!addr || typeof addr !== 'object') return '—';
+  return addr.city || '—';
+}
+
+const statusStyles: Record<string, string> = {
+  pending: 'bg-amber-50 text-amber-800 ring-amber-200',
+  needs_info: 'bg-sky-50 text-sky-800 ring-sky-200',
+};
+---
+
+<Admin title="Submissions" activeNav="submissions">
+  <div class="rounded-xl bg-white ring-1 ring-black/5">
+    <div class="border-b border-neutral-200 px-5 py-3">
+      <h2 class="text-sm font-semibold text-neutral-900">
+        Pending review ({submissions?.length ?? 0})
+      </h2>
+    </div>
+    {!submissions || submissions.length === 0 ? (
+      <div class="px-5 py-12 text-center text-sm text-neutral-500">
+        No submissions awaiting review. Nice.
+      </div>
+    ) : (
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-500">
+            <tr>
+              <th class="px-5 py-2.5 font-medium">Submitted</th>
+              <th class="px-5 py-2.5 font-medium">Company</th>
+              <th class="px-5 py-2.5 font-medium">City</th>
+              <th class="px-5 py-2.5 font-medium">Services</th>
+              <th class="px-5 py-2.5 font-medium">Submitter</th>
+              <th class="px-5 py-2.5 font-medium">Status</th>
+              <th class="px-5 py-2.5"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-neutral-100">
+            {submissions.map((s) => (
+              <tr class="hover:bg-neutral-50">
+                <td class="px-5 py-3 text-neutral-600">{fmt(s.created_at)}</td>
+                <td class="px-5 py-3 font-medium text-neutral-900">{s.name}</td>
+                <td class="px-5 py-3 text-neutral-600">{city(s.address)}</td>
+                <td class="px-5 py-3 text-neutral-600">{s.services?.length ?? 0}</td>
+                <td class="px-5 py-3 text-neutral-600">
+                  <div class="text-neutral-900">{s.submitted_by_name}</div>
+                  <div class="text-xs text-neutral-500">{s.submitted_by_email}</div>
+                </td>
+                <td class="px-5 py-3">
+                  <span class:list={['inline-flex rounded-full px-2 py-0.5 text-xs font-medium ring-1', statusStyles[s.status] ?? 'bg-neutral-100 text-neutral-700 ring-neutral-200']}>
+                    {s.status}
+                  </span>
+                </td>
+                <td class="px-5 py-3 text-right">
+                  <a
+                    href={`/admin/submissions/${s.id}`}
+                    class="rounded-md border border-neutral-200 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+                  >
+                    View
+                  </a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </div>
+</Admin>

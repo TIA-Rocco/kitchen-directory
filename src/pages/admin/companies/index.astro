@@ -1,0 +1,58 @@
+---
+export const prerender = false;
+
+import Admin from '../../../layouts/Admin.astro';
+import { supabaseAdmin } from '../../../lib/supabase-server';
+
+const { data: companies } = await supabaseAdmin
+  .from('companies')
+  .select('slug, name, ranking_score, is_featured, updated_at')
+  .order('ranking_score', { ascending: false });
+---
+
+<Admin title="Companies" activeNav="companies">
+  <div class="rounded-xl bg-white ring-1 ring-black/5">
+    <div class="border-b border-neutral-200 px-5 py-3">
+      <h2 class="text-sm font-semibold text-neutral-900">All companies ({companies?.length ?? 0})</h2>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-500">
+          <tr>
+            <th class="px-5 py-2.5 font-medium">Name</th>
+            <th class="px-5 py-2.5 font-medium">Score</th>
+            <th class="px-5 py-2.5 font-medium">Featured</th>
+            <th class="px-5 py-2.5 text-right"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-neutral-100">
+          {(companies ?? []).map((c) => (
+            <tr class="hover:bg-neutral-50">
+              <td class="px-5 py-3 font-medium text-neutral-900">{c.name}</td>
+              <td class="px-5 py-3 text-neutral-700">
+                {typeof c.ranking_score === 'number' ? c.ranking_score.toFixed(1) : '—'}
+              </td>
+              <td class="px-5 py-3">
+                {c.is_featured ? (
+                  <span class="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
+                    Featured
+                  </span>
+                ) : (
+                  <span class="text-xs text-neutral-500">—</span>
+                )}
+              </td>
+              <td class="px-5 py-3 text-right">
+                <a
+                  href={`/admin/companies/${c.slug}`}
+                  class="rounded-md border border-neutral-200 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+                >
+                  Edit ranking
+                </a>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</Admin>

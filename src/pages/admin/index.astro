@@ -1,0 +1,104 @@
+---
+export const prerender = false;
+
+import Admin from '../../layouts/Admin.astro';
+import { supabaseAdmin } from '../../lib/supabase-server';
+
+// Counts
+const [{ count: pendingSubs }, { count: pendingReviews }] = await Promise.all([
+  supabaseAdmin
+    .from('supplier_submissions')
+    .select('*', { count: 'exact', head: true })
+    .in('status', ['pending', 'needs_info']),
+  supabaseAdmin
+    .from('reviews')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'pending'),
+]);
+
+// Recent activity: last 5 status changes across both tables (approximate via updated_at)
+const [{ data: recentSubs }, { data: recentReviews }] = await Promise.all([
+  supabaseAdmin
+    .from('supplier_submissions')
+    .select('id, name, status, updated_at, approved_at, rejected_at')
+    .order('updated_at', { ascending: false })
+    .limit(5),
+  supabaseAdmin
+    .from('reviews')
+    .select('id, company_id, reviewer_name, rating, status, updated_at, companies(name)')
+    .order('updated_at', { ascending: false })
+    .limit(5),
+]);
+
+type Activity = { when: string; label: string; href: string };
+const activity: Activity[] = [];
+for (const s of recentSubs ?? []) {
+  activity.push({
+    when: s.updated_at,
+    label: `Submission “${s.name}” → ${s.status}`,
+    href: `/admin/submissions/${s.id}`,
+  });
+}
+for (const r of recentReviews ?? []) {
+  const companyName = (r as any).companies?.name ?? 'Unknown company';
+  activity.push({
+    when: r.updated_at,
+    label: `Review by ${r.reviewer_name} for ${companyName} (${r.rating}★) → ${r.status}`,
+    href: `/admin/reviews`,
+  });
+}
+activity.sort((a, b) => (a.when < b.when ? 1 : -1));
+const top = activity.slice(0, 5);
+
+function fmt(ts: string) {
+  return new Date(ts).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' });
+}
+---
+
+<Admin title="Dashboard" activeNav="dashboard">
+  <div class="grid gap-4 sm:grid-cols-2">
+    <a
+      href="/admin/submissions"
+      class="block rounded-xl bg-white p-5 ring-1 ring-black/5 transition hover:ring-emerald-300"
+    >
+      <div class="text-xs font-medium uppercase tracking-wide text-neutral-500">
+        Pending submissions
+      </div>
+      <div class="mt-2 text-3xl font-semibold text-neutral-900">{pendingSubs ?? 0}</div>
+      <div class="mt-1 text-xs text-emerald-700">Review queue →</div>
+    </a>
+    <a
+      href="/admin/reviews"
+      class="block rounded-xl bg-white p-5 ring-1 ring-black/5 transition hover:ring-emerald-300"
+    >
+      <div class="text-xs font-medium uppercase tracking-wide text-neutral-500">
+        Pending reviews
+      </div>
+      <div class="mt-2 text-3xl font-semibold text-neutral-900">{pendingReviews ?? 0}</div>
+      <div class="mt-1 text-xs text-emerald-700">Moderate →</div>
+    </a>
+  </div>
+
+  <section class="mt-8 rounded-xl bg-white ring-1 ring-black/5">
+    <div class="flex items-center justify-between border-b border-neutral-200 px-5 py-3">
+      <h2 class="text-sm font-semibold text-neutral-900">Recent activity</h2>
+      <a href="/admin/companies" class="text-xs text-emerald-700 hover:text-emerald-800">
+        Manage companies →
+      </a>
+    </div>
+    {top.length === 0 ? (
+      <div class="px-5 py-8 text-center text-sm text-neutral-500">No activity yet.</div>
+    ) : (
+      <ul class="divide-y divide-neutral-100">
+        {top.map((a) => (
+          <li class="px-5 py-3">
+            <a href={a.href} class="flex items-center justify-between gap-3 text-sm">
+              <span class="truncate text-neutral-800">{a.label}</span>
+              <span class="shrink-0 text-xs text-neutral-500">{fmt(a.when)}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    )}
+  </section>
+</Admin>

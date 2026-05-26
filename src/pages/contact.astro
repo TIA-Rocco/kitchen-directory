@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import Footer from '../components/Footer.astro';
 ---
 
 <Base
@@ -13,8 +14,9 @@ import Base from '../layouts/Base.astro';
         <span class="text-lg font-semibold tracking-tight">KitchenEquipment.ca</span>
       </a>
       <div class="flex items-center gap-6">
-        <a href="/blog" class="text-sm font-medium text-neutral-600 hover:text-neutral-900">Blog</a>
-        <a href="/submit-review" class="text-sm font-medium text-neutral-600 hover:text-neutral-900">Submit a Review</a>
+        <a href="/blog" class="max-sm:hidden text-sm font-medium text-neutral-600 hover:text-neutral-900">Blog</a>
+        <a href="/submit-review" class="max-sm:hidden text-sm font-medium text-neutral-600 hover:text-neutral-900">Submit a Review</a>
+        <a href="/list-your-company" class="text-sm font-medium text-emerald-600 hover:text-emerald-500">List your company</a>
       </div>
     </nav>
   </header>
@@ -39,10 +41,16 @@ import Base from '../layouts/Base.astro';
             <select id="reason" name="type" required class="col-span-full row-start-1 w-full appearance-none rounded-lg py-2.5 pr-8 pl-3 text-sm ring-1 ring-black/10 focus:outline-2 focus:-outline-offset-1 focus:outline-emerald-600">
               <option value="general">General Inquiry</option>
               <option value="update_profile">Update My Company Profile</option>
+              <option value="submit_company">List My Company in the Directory</option>
             </select>
             <svg viewBox="0 0 8 5" width="8" height="5" fill="none" class="pointer-events-none col-start-2 row-start-1 place-self-center">
               <path d="M.5.5 4 4 7.5.5" stroke="currentcolor" />
             </svg>
+          </div>
+          <div id="submit-company-notice" class="hidden mt-3 rounded-lg bg-emerald-50 border border-emerald-200 p-4 text-sm text-emerald-900">
+            <p class="font-medium">Want to be listed in our directory?</p>
+            <p class="mt-1">We have a dedicated editorial application with everything we need to review your business.</p>
+            <a href="/list-your-company" class="mt-2 inline-block font-semibold underline hover:no-underline">Apply on our dedicated form &rarr;</a>
           </div>
         </div>
 
@@ -78,11 +86,20 @@ import Base from '../layouts/Base.astro';
         </p>
       </div>
     </div>
+
+    <script is:inline>
+      (function () {
+        var reason = document.getElementById('reason');
+        var notice = document.getElementById('submit-company-notice');
+        if (!reason || !notice) return;
+        var sync = function () {
+          notice.classList.toggle('hidden', reason.value !== 'submit_company');
+        };
+        reason.addEventListener('change', sync);
+        sync();
+      })();
+    </script>
   </main>
 
-  <footer class="border-t border-neutral-950/5 py-10">
-    <div class="mx-auto max-w-7xl px-6 text-center text-sm text-neutral-500">
-      <p>kitchenequipment.ca. Independent commercial kitchen equipment supplier directory.</p>
-    </div>
-  </footer>
+  <Footer />
 </Base>

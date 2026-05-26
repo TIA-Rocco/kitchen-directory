@@ -1,0 +1,83 @@
+---
+export const prerender = false;
+
+import '../../styles/global.css';
+
+const url = new URL(Astro.request.url);
+const next = url.searchParams.get('next') ?? '/admin';
+const sent = url.searchParams.get('sent') === '1';
+const errorParam = url.searchParams.get('error');
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Sign in · Admin</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body class="min-h-screen bg-neutral-50 text-neutral-900 antialiased">
+    <main class="flex min-h-screen items-center justify-center px-4">
+      <div class="w-full max-w-md">
+        <div class="mb-6 text-center">
+          <div class="text-sm font-semibold text-neutral-900">Kitchen Equipment Canada</div>
+          <div class="text-xs text-neutral-500">Admin sign-in</div>
+        </div>
+
+        <div class="rounded-xl bg-white p-6 shadow-sm ring-1 ring-black/5">
+          {sent ? (
+            <div class="space-y-3 text-sm">
+              <div class="rounded-md bg-emerald-50 px-4 py-3 text-emerald-800 ring-1 ring-emerald-200">
+                <div class="font-medium">Check your inbox</div>
+                <p class="mt-1 text-emerald-700">
+                  If your email is on the admin allow-list, a magic link is on the way. It expires
+                  in 1 hour.
+                </p>
+              </div>
+              <a href="/admin/login" class="block text-center text-xs text-neutral-500 hover:text-neutral-700">
+                Use a different email
+              </a>
+            </div>
+          ) : (
+            <form method="post" action="/api/admin/login" class="space-y-4">
+              <div>
+                <label for="email" class="block text-sm font-medium text-neutral-900">Email</label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  autocomplete="email"
+                  autofocus
+                  placeholder="you@example.com"
+                  class="mt-1.5 w-full rounded-lg px-3 py-2.5 text-sm ring-1 ring-black/10 focus:outline-2 focus:-outline-offset-1 focus:outline-emerald-600 max-sm:text-base/6"
+                />
+              </div>
+              <input type="hidden" name="next" value={next} />
+              {errorParam && (
+                <div class="rounded-md bg-red-50 px-3 py-2 text-xs text-red-700 ring-1 ring-red-200">
+                  Sign-in failed: {errorParam}. Try again or contact support.
+                </div>
+              )}
+              <button
+                type="submit"
+                class="w-full rounded-md bg-emerald-600 px-3 py-2.5 text-sm font-medium text-white hover:bg-emerald-500"
+              >
+                Email me a sign-in link
+              </button>
+              <p class="text-center text-xs text-neutral-500">
+                Only emails on the admin allow-list can sign in.
+              </p>
+            </form>
+          )}
+        </div>
+
+        <div class="mt-4 text-center">
+          <a href="/" class="text-xs text-neutral-500 hover:text-neutral-700">← Back to site</a>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

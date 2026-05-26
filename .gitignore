@@ -27,3 +27,6 @@ pnpm-debug.log*
 # supabase CLI local state
 supabase/.temp/
 supabase/.branches/
+
+# playwright MCP runtime cache
+.playwright-mcp/

@@ -1,0 +1,299 @@
+---
+import Base from '../layouts/Base.astro';
+import Footer from '../components/Footer.astro';
+
+const siteUrl = Astro.site?.href ?? Astro.url.origin;
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
+
+const serviceOptions: { slug: string; label: string }[] = [
+  { slug: 'design-and-technical-drawings', label: 'Design & Technical Drawings' },
+  { slug: 'equipment-financing', label: 'Equipment Financing' },
+  { slug: 'equipment-leasing', label: 'Equipment Leasing' },
+  { slug: 'commercial-equipment-procurement', label: 'Commercial Equipment Procurement' },
+  { slug: 'price-match', label: 'Price Match' },
+  { slug: 'account-management', label: 'Account Management' },
+  { slug: 'equipment-consulting', label: 'Equipment Consulting' },
+  { slug: 'restaurant-consulting', label: 'Restaurant Consulting' },
+  { slug: 'installation-services', label: 'Installation Services' },
+];
+
+const provinces = [
+  'AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'NT', 'NU', 'ON', 'PE', 'QC', 'SK', 'YT',
+];
+
+const pageTitle = 'Apply to be Listed';
+const pageDescription = 'Apply to be listed in the Kitchen Equipment Canada editorial directory. Submit your company profile for review.';
+
+const breadcrumbLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: new URL('/', siteUrl).href },
+    { '@type': 'ListItem', position: 2, name: 'Apply to be Listed', item: new URL('/list-your-company', siteUrl).href },
+  ],
+};
+
+const webPageLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: 'Apply to be Listed | Kitchen Equipment Canada',
+  description: pageDescription,
+  url: new URL('/list-your-company', siteUrl).href,
+};
+
+const inputClass = 'mt-1.5 w-full rounded-lg px-3 py-2.5 text-sm ring-1 ring-black/10 focus:outline-2 focus:-outline-offset-1 focus:outline-emerald-600 max-sm:text-base/6';
+const labelClass = 'text-sm font-medium text-neutral-900';
+const helpClass = 'mt-1 text-xs text-neutral-500';
+const sectionClass = 'border-t border-neutral-950/5 pt-8';
+const sectionTitleClass = 'text-sm font-semibold tracking-wide text-neutral-900 uppercase';
+---
+
+<Base
+  title={pageTitle}
+  description={pageDescription}
+  jsonLd={[breadcrumbLd, webPageLd]}
+>
+  <header class="border-b border-neutral-950/5 bg-white">
+    <nav class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+      <a href="/" aria-label="Homepage" class="flex items-center gap-2">
+        <img src="https://assets.ui.sh/marks/1.svg?color=emerald-600&text=KE&textColor=neutral-900&font=inter" alt="Kitchen Equipment Canada" class="h-8" />
+        <span class="text-lg font-semibold tracking-tight">KitchenEquipment.ca</span>
+      </a>
+      <div class="flex items-center gap-6">
+        <a href="/blog" class="max-sm:hidden text-sm font-medium text-neutral-600 hover:text-neutral-900">Blog</a>
+        <a href="/submit-review" class="max-sm:hidden text-sm font-medium text-neutral-600 hover:text-neutral-900">Submit a Review</a>
+        <a href="/list-your-company" class="max-sm:hidden text-sm font-medium text-emerald-600 hover:text-emerald-500">List your company</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="py-12">
+    <div class="mx-auto max-w-2xl px-6">
+      <nav aria-label="Breadcrumb" class="text-sm text-neutral-500">
+        <a href="/" class="hover:text-neutral-700">Home</a>
+        <span class="mx-2">/</span>
+        <span class="text-neutral-700">Apply to be Listed</span>
+      </nav>
+
+      <h1 class="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">Apply to be listed</h1>
+      <p class="mt-3 text-neutral-600">Apply to be listed in our editorial directory. Most submissions are reviewed within a few business days.</p>
+
+      <div class="mt-8 rounded-xl bg-emerald-50 border border-emerald-100 p-5 text-sm text-emerald-900">
+        <p class="font-medium">What happens next</p>
+        <ol class="mt-2 list-decimal space-y-1 pl-5 text-emerald-900/90">
+          <li>You'll receive a verification email at your business address.</li>
+          <li>After verifying, our editors review your application against our independent listing criteria.</li>
+          <li>We'll email you with a decision as soon as possible.</li>
+        </ol>
+      </div>
+
+      <form action="/api/list-company" method="POST" enctype="multipart/form-data" class="mt-10 space-y-10">
+        <!-- Honeypot (must remain empty) -->
+        <div class="hidden" aria-hidden="true">
+          <label for="business_fax">Business Fax</label>
+          <input type="text" id="business_fax" name="business_fax" tabindex="-1" autocomplete="off" />
+        </div>
+
+        <!-- Company Details -->
+        <section class="space-y-6">
+          <div>
+            <h2 class={sectionTitleClass}>Company Details</h2>
+            <p class={helpClass}>Tell us about your business. All fields required unless noted.</p>
+          </div>
+
+          <div>
+            <label for="name" class={labelClass}>Company Name</label>
+            <input type="text" id="name" name="name" required maxlength="200" class={inputClass} />
+          </div>
+
+          <div class="grid gap-6 sm:grid-cols-2">
+            <div>
+              <label for="website_url" class={labelClass}>Website URL</label>
+              <input type="url" id="website_url" name="website_url" required placeholder="https://" class={inputClass} />
+            </div>
+            <div>
+              <label for="phone" class={labelClass}>Phone</label>
+              <input type="tel" id="phone" name="phone" required class={inputClass} />
+            </div>
+          </div>
+
+          <div>
+            <label for="business_email" class={labelClass}>Business Email</label>
+            <input type="email" id="business_email" name="business_email" required class={inputClass} />
+            <p class={helpClass}>Must be a business domain (not Gmail/Yahoo/Hotmail/etc).</p>
+          </div>
+
+          <div>
+            <label for="years_in_business" class={labelClass}>Years in Business <span class="font-normal text-neutral-400">(optional)</span></label>
+            <input type="number" id="years_in_business" name="years_in_business" min="0" max="200" class={inputClass} />
+          </div>
+
+          <div>
+            <label for="certifications" class={labelClass}>Certifications <span class="font-normal text-neutral-400">(optional, comma-separated)</span></label>
+            <input type="text" id="certifications" name="certifications" placeholder="e.g. CSA, ETL, Health Canada" class={inputClass} />
+          </div>
+        </section>
+
+        <!-- Location -->
+        <section class={sectionClass}>
+          <h2 class={sectionTitleClass}>Location</h2>
+          <p class={helpClass}>Your primary business address. Canadian suppliers only.</p>
+
+          <div class="mt-6 space-y-6">
+            <div>
+              <label for="street" class={labelClass}>Street Address</label>
+              <input type="text" id="street" name="street" required class={inputClass} />
+            </div>
+
+            <div class="grid gap-6 sm:grid-cols-3">
+              <div class="sm:col-span-2">
+                <label for="city" class={labelClass}>City</label>
+                <input type="text" id="city" name="city" required class={inputClass} />
+              </div>
+              <div>
+                <label for="province" class={labelClass}>Province</label>
+                <div class="mt-1.5 inline-grid w-full grid-cols-[1fr_--spacing(8)]">
+                  <select id="province" name="province" required class="col-span-full row-start-1 w-full appearance-none rounded-lg py-2.5 pr-8 pl-3 text-sm ring-1 ring-black/10 focus:outline-2 focus:-outline-offset-1 focus:outline-emerald-600">
+                    <option value="">Select…</option>
+                    {provinces.map((p) => (<option value={p}>{p}</option>))}
+                  </select>
+                  <svg viewBox="0 0 8 5" width="8" height="5" fill="none" class="pointer-events-none col-start-2 row-start-1 place-self-center">
+                    <path d="M.5.5 4 4 7.5.5" stroke="currentcolor" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label for="postal" class={labelClass}>Postal Code</label>
+              <input type="text" id="postal" name="postal" required pattern="[A-Za-z]\d[A-Za-z] ?\d[A-Za-z]\d" placeholder="A1A 1A1" class={`${inputClass} max-w-[12rem]`} />
+            </div>
+          </div>
+        </section>
+
+        <!-- Services -->
+        <section class={sectionClass}>
+          <h2 class={sectionTitleClass}>Services Offered</h2>
+          <p class={helpClass}>Select all that apply.</p>
+
+          <fieldset class="mt-6">
+            <legend class="sr-only">Services</legend>
+            <div class="grid gap-3 sm:grid-cols-2">
+              {serviceOptions.map((s) => (
+                <label class="flex items-start gap-3 rounded-lg p-3 ring-1 ring-black/5 hover:ring-emerald-600/40 cursor-pointer">
+                  <input type="checkbox" name="services" value={s.slug} class="mt-0.5 size-4 rounded border-neutral-300 text-emerald-600 focus:ring-emerald-600" />
+                  <span class="text-sm text-neutral-900">{s.label}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        </section>
+
+        <!-- About -->
+        <section class={sectionClass}>
+          <h2 class={sectionTitleClass}>About Your Business</h2>
+          <p class={helpClass}>A short editorial description — between 100 and 500 characters.</p>
+
+          <div class="mt-6">
+            <label for="description" class={labelClass}>Description</label>
+            <textarea id="description" name="description" required rows="5" minlength="100" maxlength="500" class={inputClass} placeholder="What do you do, who do you serve, and what makes you stand out?"></textarea>
+          </div>
+        </section>
+
+        <!-- FAQs -->
+        <section class={sectionClass}>
+          <h2 class={sectionTitleClass}>Frequently Asked Questions</h2>
+          <p class={helpClass}>Provide at least 1 Q&amp;A. Up to 3 total. These appear on your public profile.</p>
+
+          <div class="mt-6 space-y-6">
+            <div class="space-y-3 rounded-lg ring-1 ring-black/5 p-4">
+              <div>
+                <label for="faq_q_1" class={labelClass}>Question 1 <span class="text-emerald-600">*</span></label>
+                <input type="text" id="faq_q_1" name="faq_q_1" required maxlength="200" class={inputClass} />
+              </div>
+              <div>
+                <label for="faq_a_1" class={labelClass}>Answer 1 <span class="text-emerald-600">*</span></label>
+                <textarea id="faq_a_1" name="faq_a_1" required rows="3" maxlength="800" class={inputClass}></textarea>
+              </div>
+            </div>
+
+            <div class="space-y-3 rounded-lg ring-1 ring-black/5 p-4">
+              <div>
+                <label for="faq_q_2" class={labelClass}>Question 2 <span class="font-normal text-neutral-400">(optional)</span></label>
+                <input type="text" id="faq_q_2" name="faq_q_2" maxlength="200" class={inputClass} />
+              </div>
+              <div>
+                <label for="faq_a_2" class={labelClass}>Answer 2</label>
+                <textarea id="faq_a_2" name="faq_a_2" rows="3" maxlength="800" class={inputClass}></textarea>
+              </div>
+            </div>
+
+            <div class="space-y-3 rounded-lg ring-1 ring-black/5 p-4">
+              <div>
+                <label for="faq_q_3" class={labelClass}>Question 3 <span class="font-normal text-neutral-400">(optional)</span></label>
+                <input type="text" id="faq_q_3" name="faq_q_3" maxlength="200" class={inputClass} />
+              </div>
+              <div>
+                <label for="faq_a_3" class={labelClass}>Answer 3</label>
+                <textarea id="faq_a_3" name="faq_a_3" rows="3" maxlength="800" class={inputClass}></textarea>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Logo -->
+        <section class={sectionClass}>
+          <h2 class={sectionTitleClass}>Logo</h2>
+          <p class={helpClass}>Optional. PNG/JPG/SVG, max 1MB. Square or wordmark works best.</p>
+          <div class="mt-6">
+            <label for="logo" class={labelClass}>Upload logo</label>
+            <input type="file" id="logo" name="logo" accept="image/png,image/jpeg,image/svg+xml" class="mt-1.5 block w-full text-sm text-neutral-700 file:mr-4 file:rounded-md file:border-0 file:bg-emerald-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-emerald-700 hover:file:bg-emerald-100" />
+            <p class={helpClass}>PNG/JPG/SVG, max 1MB.</p>
+          </div>
+        </section>
+
+        <!-- Submitter Info -->
+        <section class={sectionClass}>
+          <h2 class={sectionTitleClass}>Submitter Info</h2>
+          <p class={helpClass}>Who's filling this out? We'll use this only to follow up about your application.</p>
+
+          <div class="mt-6 grid gap-6 sm:grid-cols-2">
+            <div>
+              <label for="submitted_by_name" class={labelClass}>Your Name</label>
+              <input type="text" id="submitted_by_name" name="submitted_by_name" required class={inputClass} />
+            </div>
+            <div>
+              <label for="submitted_by_email" class={labelClass}>Your Email</label>
+              <input type="email" id="submitted_by_email" name="submitted_by_email" required class={inputClass} />
+            </div>
+          </div>
+        </section>
+
+        <!-- Turnstile + Submit -->
+        <section class={sectionClass}>
+          {turnstileSiteKey ? (
+            <div class="cf-turnstile" data-sitekey={turnstileSiteKey}></div>
+          ) : (
+            <div class="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900">
+              Turnstile not configured (dev). Submissions will go through without bot challenge.
+            </div>
+          )}
+
+          <button type="submit" class="mt-6 w-full rounded-md bg-emerald-600 px-3 py-2.5 text-sm font-medium text-white hover:bg-emerald-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600">
+            Submit application
+          </button>
+
+          <p class="mt-3 text-center text-xs text-neutral-500">
+            By submitting, you confirm the information is accurate and that you're authorized to apply on behalf of your business.
+          </p>
+        </section>
+      </form>
+    </div>
+  </main>
+
+  {turnstileSiteKey && (
+    <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  )}
+
+  <Footer />
+</Base>
