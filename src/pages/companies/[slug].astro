@@ -93,8 +93,12 @@ const jsonLd = [
     <section class="py-10">
       <div class="mx-auto max-w-7xl px-6">
         <div class="flex items-start gap-6">
-          <div class="flex size-20 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-3xl font-semibold text-neutral-400">
-            {company.name.charAt(0)}
+          <div class="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-black/5 text-3xl font-semibold text-neutral-400">
+            {company.logo_url ? (
+              <img src={company.logo_url} alt={`${company.name} logo`} class="size-full object-contain p-2" />
+            ) : (
+              company.name.charAt(0)
+            )}
           </div>
           <div class="min-w-0 flex-1">
             <div class="flex items-center gap-3">
