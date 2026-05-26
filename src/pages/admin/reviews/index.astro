@@ -1,0 +1,120 @@
+---
+export const prerender = false;
+
+import Admin from '../../../layouts/Admin.astro';
+import { supabaseAdmin } from '../../../lib/supabase-server';
+
+const { data: reviews } = await supabaseAdmin
+  .from('reviews')
+  .select('id, reviewer_name, rating, review_text, service_category, custom_service, created_at, companies(name, slug)')
+  .eq('status', 'pending')
+  .order('created_at', { ascending: false });
+
+function fmt(ts: string) {
+  return new Date(ts).toLocaleDateString('en-CA', { dateStyle: 'medium' });
+}
+
+function preview(text: string | null, n = 80) {
+  if (!text) return '—';
+  return text.length > n ? text.slice(0, n).trimEnd() + '…' : text;
+}
+
+function stars(rating: number) {
+  return '★'.repeat(Math.max(0, Math.min(5, rating))) + '☆'.repeat(5 - Math.max(0, Math.min(5, rating)));
+}
+---
+
+<Admin title="Reviews" activeNav="reviews">
+  <div class="rounded-xl bg-white ring-1 ring-black/5">
+    <div class="border-b border-neutral-200 px-5 py-3">
+      <h2 class="text-sm font-semibold text-neutral-900">
+        Pending moderation ({reviews?.length ?? 0})
+      </h2>
+    </div>
+    {!reviews || reviews.length === 0 ? (
+      <div class="px-5 py-12 text-center text-sm text-neutral-500">No reviews to moderate.</div>
+    ) : (
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm" data-reviews-table>
+          <thead class="bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-500">
+            <tr>
+              <th class="px-5 py-2.5 font-medium">Submitted</th>
+              <th class="px-5 py-2.5 font-medium">Company</th>
+              <th class="px-5 py-2.5 font-medium">Reviewer</th>
+              <th class="px-5 py-2.5 font-medium">Rating</th>
+              <th class="px-5 py-2.5 font-medium">Preview</th>
+              <th class="px-5 py-2.5 text-right"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-neutral-100">
+            {reviews.map((r) => (
+              <tr data-review-row data-review-id={r.id} class="align-top hover:bg-neutral-50">
+                <td class="px-5 py-3 text-neutral-600">{fmt(r.created_at)}</td>
+                <td class="px-5 py-3 font-medium text-neutral-900">
+                  {(r as any).companies?.name ?? '—'}
+                </td>
+                <td class="px-5 py-3 text-neutral-700">{r.reviewer_name}</td>
+                <td class="px-5 py-3 text-amber-600 font-mono text-xs">{stars(r.rating)}</td>
+                <td class="px-5 py-3 text-neutral-600 max-w-md">
+                  <div>{preview(r.review_text)}</div>
+                  <div class="mt-0.5 text-xs text-neutral-500">
+                    {r.custom_service || r.service_category}
+                  </div>
+                </td>
+                <td class="px-5 py-3 text-right whitespace-nowrap">
+                  <button
+                    type="button"
+                    data-action="approve"
+                    class="rounded-md bg-emerald-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-emerald-500"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    type="button"
+                    data-action="reject"
+                    class="ml-1.5 rounded-md border border-neutral-300 px-2.5 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+                  >
+                    Reject
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </div>
+
+  <script>
+    const table = document.querySelector<HTMLElement>('[data-reviews-table]');
+    if (table) {
+      const toast = (m: string, t: 'success' | 'error' = 'success') =>
+        (window as any).showToast?.(m, t);
+      table.addEventListener('click', async (e) => {
+        const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-action]');
+        if (!btn) return;
+        const row = btn.closest<HTMLElement>('[data-review-row]');
+        const id = row?.getAttribute('data-review-id');
+        const action = btn.getAttribute('data-action');
+        if (!id || !action) return;
+        if (action === 'reject' && !confirm('Reject this review?')) return;
+
+        row!.querySelectorAll('button').forEach((b) => ((b as HTMLButtonElement).disabled = true));
+        try {
+          const res = await fetch(`/api/admin/reviews/${id}/${action}`, { method: 'POST' });
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            toast(data?.error || 'Action failed', 'error');
+            row!.querySelectorAll('button').forEach((b) => ((b as HTMLButtonElement).disabled = false));
+            return;
+          }
+          row!.remove();
+          toast(action === 'approve' ? 'Approved. Deploy queued.' : 'Rejected.');
+        } catch {
+          toast('Network error', 'error');
+          row!.querySelectorAll('button').forEach((b) => ((b as HTMLButtonElement).disabled = false));
+        }
+      });
+    }
+  </script>
+</Admin>

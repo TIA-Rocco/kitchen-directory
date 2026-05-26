@@ -1,0 +1,303 @@
+---
+export const prerender = false;
+
+import Admin from '../../../layouts/Admin.astro';
+import { supabaseAdmin } from '../../../lib/supabase-server';
+
+const { id } = Astro.params;
+
+const { data: sub, error } = await supabaseAdmin
+  .from('supplier_submissions')
+  .select('*')
+  .eq('id', id)
+  .maybeSingle();
+
+if (error || !sub) {
+  return new Response('Not found', { status: 404 });
+}
+
+function fmt(ts: string | null) {
+  return ts ? new Date(ts).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' }) : '—';
+}
+
+const addr = (sub.address ?? {}) as Record<string, string>;
+const faqs = (sub.faq ?? []) as { question: string; answer: string }[];
+const services = (sub.services ?? []) as string[];
+const certs = (sub.certifications ?? []) as string[];
+
+const isClosed = sub.status === 'approved' || sub.status === 'rejected';
+---
+
+<Admin title={sub.name} activeNav="submissions">
+  <div class="mb-4 flex items-center gap-3">
+    <a href="/admin/submissions" class="text-sm text-emerald-700 hover:text-emerald-800">
+      ← All submissions
+    </a>
+    <span class="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-700 ring-1 ring-neutral-200">
+      {sub.status}
+    </span>
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-3">
+    <!-- Main column -->
+    <div class="space-y-6 lg:col-span-2">
+      <!-- Company details -->
+      <section class="rounded-xl bg-white p-6 ring-1 ring-black/5">
+        <h2 class="text-sm font-semibold text-neutral-900">Company details</h2>
+        <dl class="mt-4 grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-neutral-500">Name</dt>
+            <dd class="mt-0.5 text-neutral-900">{sub.name}</dd>
+          </div>
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-neutral-500">Website</dt>
+            <dd class="mt-0.5">
+              <a href={sub.website_url} target="_blank" rel="noopener" class="text-emerald-700 hover:underline">
+                {sub.website_url}
+              </a>
+            </dd>
+          </div>
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-neutral-500">Phone</dt>
+            <dd class="mt-0.5 text-neutral-900">{sub.phone}</dd>
+          </div>
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-neutral-500">Business email</dt>
+            <dd class="mt-0.5 text-neutral-900">{sub.business_email}</dd>
+          </div>
+          <div class="sm:col-span-2">
+            <dt class="text-xs uppercase tracking-wide text-neutral-500">Address</dt>
+            <dd class="mt-0.5 text-neutral-900">
+              {[addr.street, addr.city, addr.province, addr.postal].filter(Boolean).join(', ') || '—'}
+            </dd>
+          </div>
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-neutral-500">Years in business</dt>
+            <dd class="mt-0.5 text-neutral-900">{sub.years_in_business ?? '—'}</dd>
+          </div>
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-neutral-500">Logo</dt>
+            <dd class="mt-0.5">
+              {sub.logo_url ? (
+                <img src={sub.logo_url} alt="Logo" class="h-12 w-auto rounded ring-1 ring-neutral-200" />
+              ) : <span class="text-neutral-500">—</span>}
+            </dd>
+          </div>
+        </dl>
+
+        <div class="mt-5">
+          <div class="text-xs uppercase tracking-wide text-neutral-500">Services</div>
+          <div class="mt-1.5 flex flex-wrap gap-1.5">
+            {services.length === 0 ? <span class="text-sm text-neutral-500">—</span> : services.map((s) => (
+              <span class="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs text-emerald-700 ring-1 ring-emerald-200">{s}</span>
+            ))}
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <div class="text-xs uppercase tracking-wide text-neutral-500">Certifications</div>
+          <div class="mt-1.5 flex flex-wrap gap-1.5">
+            {certs.length === 0 ? <span class="text-sm text-neutral-500">—</span> : certs.map((c) => (
+              <span class="rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs text-neutral-700 ring-1 ring-neutral-200">{c}</span>
+            ))}
+          </div>
+        </div>
+
+        <div class="mt-5">
+          <div class="text-xs uppercase tracking-wide text-neutral-500">Description</div>
+          <p class="mt-1 whitespace-pre-line text-sm text-neutral-800">{sub.description}</p>
+        </div>
+
+        {faqs.length > 0 && (
+          <div class="mt-5">
+            <div class="text-xs uppercase tracking-wide text-neutral-500">FAQs</div>
+            <ul class="mt-2 space-y-3">
+              {faqs.map((f) => (
+                <li>
+                  <div class="text-sm font-medium text-neutral-900">{f.question}</div>
+                  <div class="mt-0.5 whitespace-pre-line text-sm text-neutral-700">{f.answer}</div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </section>
+
+      <!-- Internal notes -->
+      <section class="rounded-xl bg-white p-6 ring-1 ring-black/5">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm font-semibold text-neutral-900">Internal notes</h2>
+          <span data-notes-status class="text-xs text-neutral-500"></span>
+        </div>
+        <textarea
+          data-notes
+          data-submission-id={sub.id}
+          rows="5"
+          placeholder="Notes for the team. Auto-saves on blur."
+          class="mt-3 w-full rounded-lg px-3 py-2.5 text-sm ring-1 ring-black/10 focus:outline-2 focus:-outline-offset-1 focus:outline-emerald-600"
+        >{sub.internal_notes ?? ''}</textarea>
+      </section>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="space-y-6">
+      <section class="rounded-xl bg-white p-6 ring-1 ring-black/5">
+        <h2 class="text-sm font-semibold text-neutral-900">Submitter</h2>
+        <dl class="mt-3 space-y-2 text-sm">
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-neutral-500">Name</dt>
+            <dd class="mt-0.5 text-neutral-900">{sub.submitted_by_name}</dd>
+          </div>
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-neutral-500">Email</dt>
+            <dd class="mt-0.5">
+              <a href={`mailto:${sub.submitted_by_email}`} class="text-emerald-700 hover:underline">
+                {sub.submitted_by_email}
+              </a>
+            </dd>
+          </div>
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-neutral-500">Submitted</dt>
+            <dd class="mt-0.5 text-neutral-900">{fmt(sub.created_at)}</dd>
+          </div>
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-neutral-500">Verified</dt>
+            <dd class="mt-0.5 text-neutral-900">{fmt(sub.verified_at)}</dd>
+          </div>
+          {sub.submitter_ip && (
+            <div>
+              <dt class="text-xs uppercase tracking-wide text-neutral-500">IP</dt>
+              <dd class="mt-0.5 font-mono text-xs text-neutral-700">{sub.submitter_ip}</dd>
+            </div>
+          )}
+        </dl>
+      </section>
+
+      <!-- Sticky action bar -->
+      <section class="sticky top-6 rounded-xl bg-white p-6 ring-1 ring-black/5">
+        <h2 class="text-sm font-semibold text-neutral-900">Actions</h2>
+        <div class="mt-4 space-y-2" data-actions data-submission-id={sub.id} data-business-email={sub.business_email}>
+          <button
+            type="button"
+            data-action="approve"
+            disabled={isClosed}
+            class="w-full rounded-md bg-emerald-600 px-3 py-2.5 text-sm font-medium text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Approve
+          </button>
+          <button
+            type="button"
+            data-action="needs-info"
+            disabled={isClosed}
+            class="w-full rounded-md border border-neutral-300 bg-white px-3 py-2.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Needs info
+          </button>
+          <button
+            type="button"
+            data-action="reject"
+            disabled={isClosed}
+            class="w-full rounded-md border border-neutral-300 bg-white px-3 py-2.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Reject
+          </button>
+        </div>
+        {isClosed && (
+          <p class="mt-3 text-xs text-neutral-500">
+            This submission is closed ({sub.status}). Re-open via Supabase if needed.
+          </p>
+        )}
+      </section>
+    </aside>
+  </div>
+
+  <script>
+    // Auto-save internal notes (debounced 1s, also on blur)
+    const notesEl = document.querySelector<HTMLTextAreaElement>('[data-notes]');
+    const statusEl = document.querySelector<HTMLElement>('[data-notes-status]');
+    if (notesEl) {
+      const id = notesEl.getAttribute('data-submission-id');
+      let timer: number | undefined;
+      const save = async () => {
+        if (statusEl) statusEl.textContent = 'Saving…';
+        try {
+          const res = await fetch(`/api/admin/submissions/${id}/notes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ internal_notes: notesEl.value }),
+          });
+          if (statusEl) statusEl.textContent = res.ok ? 'Saved' : 'Save failed';
+        } catch {
+          if (statusEl) statusEl.textContent = 'Save failed';
+        }
+      };
+      notesEl.addEventListener('input', () => {
+        if (statusEl) statusEl.textContent = 'Typing…';
+        window.clearTimeout(timer);
+        timer = window.setTimeout(save, 1000);
+      });
+      notesEl.addEventListener('blur', () => {
+        window.clearTimeout(timer);
+        save();
+      });
+    }
+
+    // Action buttons
+    const actions = document.querySelector<HTMLElement>('[data-actions]');
+    if (actions) {
+      const id = actions.getAttribute('data-submission-id')!;
+      const businessEmail = actions.getAttribute('data-business-email') ?? '';
+      const toast = (msg: string, type: 'success' | 'error' = 'success') =>
+        (window as any).showToast?.(msg, type);
+      const disable = () => {
+        actions.querySelectorAll('button').forEach((b) => ((b as HTMLButtonElement).disabled = true));
+      };
+
+      actions.querySelectorAll<HTMLButtonElement>('button[data-action]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const action = btn.getAttribute('data-action')!;
+          if (action === 'reject' && !confirm('Reject this submission?')) return;
+          if (action === 'needs-info' && !confirm('Mark as needs-info and email the submitter?')) return;
+
+          btn.disabled = true;
+          try {
+            const res = await fetch(`/api/admin/submissions/${id}/${action}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({}),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+              toast(data?.error || 'Action failed', 'error');
+              btn.disabled = false;
+              return;
+            }
+
+            if (action === 'approve') {
+              disable();
+              const slug = data.company_slug;
+              toast(slug ? `Approved. Live at /companies/${slug}` : 'Approved.');
+              setTimeout(() => (window.location.href = '/admin/submissions'), 1200);
+            } else {
+              disable();
+              const subject = action === 'reject'
+                ? 'Your application to Kitchen Equipment Canada'
+                : 'We need a bit more info on your application';
+              const body = action === 'reject'
+                ? 'Hi,\n\nThanks for applying. Unfortunately we are unable to list your company at this time.\n\n— Kitchen Equipment Canada'
+                : 'Hi,\n\nThanks for your submission. Before we can list your company we need a bit more information:\n\n[details]\n\nReply to this email and we will continue the review.\n\n— Kitchen Equipment Canada';
+              const mailto = `mailto:${businessEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+              window.open(mailto, '_blank');
+              toast(action === 'reject' ? 'Rejected. Compose email opened.' : 'Marked needs-info. Compose email opened.');
+              setTimeout(() => (window.location.href = '/admin/submissions'), 1500);
+            }
+          } catch (err) {
+            console.error(err);
+            toast('Network error', 'error');
+            btn.disabled = false;
+          }
+        });
+      });
+    }
+  </script>
+</Admin>

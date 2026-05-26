@@ -1,0 +1,28 @@
+---
+export const prerender = false;
+
+import { createSupabaseServerClient } from '../../../lib/supabase-server';
+
+const url = new URL(Astro.request.url);
+const code = url.searchParams.get('code');
+const next = url.searchParams.get('next') || '/admin';
+const errorDescription = url.searchParams.get('error_description');
+
+let redirectTo: string | null = null;
+
+if (errorDescription) {
+  redirectTo = '/admin/login?error=' + encodeURIComponent(errorDescription);
+} else if (code) {
+  const supabase = createSupabaseServerClient(Astro.cookies, Astro.request);
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  if (error) {
+    redirectTo = '/admin/login?error=' + encodeURIComponent(error.message);
+  } else {
+    redirectTo = next.startsWith('/') ? next : '/admin';
+  }
+} else {
+  redirectTo = '/admin/login?error=missing_code';
+}
+
+return Astro.redirect(redirectTo, 302);
+---
