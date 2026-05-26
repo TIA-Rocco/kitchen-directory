@@ -121,8 +121,12 @@ function formatDate(iso: string | null): string {
             {linkedCompanies.map((company) => (
               <li>
                 <a href={`/companies/${company.slug}`} class="flex items-center gap-4 rounded-lg bg-white p-4 ring-1 ring-black/5 transition-shadow hover:shadow-md">
-                  <div class="flex size-12 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-lg font-semibold text-neutral-400">
-                    {company.name.charAt(0)}
+                  <div class="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white ring-1 ring-black/5 text-lg font-semibold text-neutral-400">
+                    {company.logo_url ? (
+                      <img src={company.logo_url} alt={`${company.name} logo`} class="size-full object-contain p-1.5" loading="lazy" />
+                    ) : (
+                      company.name.charAt(0)
+                    )}
                   </div>
                   <div class="min-w-0 flex-1">
                     <p class="font-medium text-neutral-900">{company.name}</p>
