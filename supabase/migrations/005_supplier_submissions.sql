@@ -35,7 +35,7 @@ end $$;
 -- Table: supplier_submissions
 -- ----------------------------------------------------------------------------
 create table if not exists supplier_submissions (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
 
   -- profile (mirrors companies)
   name text not null,
