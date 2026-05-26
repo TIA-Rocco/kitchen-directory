@@ -4,7 +4,6 @@ import type { AstroCookies } from 'astro';
 
 const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
-const SUPABASE_SERVICE_ROLE_KEY = import.meta.env.SUPABASE_SERVICE_ROLE_KEY;
 
 /**
  * Cookie-aware Supabase client for use in middleware, pages, and API routes.
@@ -41,7 +40,31 @@ export function createSupabaseServerClient(
  * Service-role client for privileged admin operations: bypasses RLS, calls
  * SECURITY DEFINER functions like promote_submission, writes audit columns
  * regardless of user policy. Never expose to the browser.
+ *
+ * Lazy-initialized via a Proxy so module load doesn't require the env var.
+ * This matters because Astro's prerender phase imports the middleware (which
+ * transitively imports this module) even on builds where SUPABASE_SERVICE_ROLE_KEY
+ * isn't yet configured — without lazy init, the build hard-fails before
+ * static pages can render.
  */
-export const supabaseAdmin: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-  auth: { persistSession: false, autoRefreshToken: false },
+let _supabaseAdmin: SupabaseClient | null = null;
+function getSupabaseAdmin(): SupabaseClient {
+  if (_supabaseAdmin) return _supabaseAdmin;
+  const key = import.meta.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!key) {
+    throw new Error(
+      'SUPABASE_SERVICE_ROLE_KEY is not set. Configure it in the deployment environment ' +
+      'before invoking admin or supplier-submission endpoints.',
+    );
+  }
+  _supabaseAdmin = createClient(SUPABASE_URL, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  return _supabaseAdmin;
+}
+
+export const supabaseAdmin = new Proxy({} as SupabaseClient, {
+  get(_target, prop, receiver) {
+    return Reflect.get(getSupabaseAdmin(), prop, receiver);
+  },
 });
