@@ -44,8 +44,13 @@ const webPageLd = {
 const inputClass = 'mt-1.5 w-full rounded-lg px-3 py-2.5 text-sm ring-1 ring-black/10 focus:outline-2 focus:-outline-offset-1 focus:outline-emerald-600 max-sm:text-base/6';
 const labelClass = 'text-sm font-medium text-neutral-900';
 const helpClass = 'mt-1 text-xs text-neutral-500';
-const sectionClass = 'border-t border-neutral-950/5 pt-8';
-const sectionTitleClass = 'text-sm font-semibold tracking-wide text-neutral-900 uppercase';
+
+const steps = [
+  { n: 1, title: 'Tell us about your company', subtitle: 'Start with the basics — name, contact, and history.' },
+  { n: 2, title: 'Where you operate', subtitle: 'Your address and the services you provide.' },
+  { n: 3, title: 'Share your story', subtitle: 'A short description, FAQs for your profile, and an optional logo.' },
+  { n: 4, title: 'About you', subtitle: "Who's submitting? We'll only use this to follow up." },
+];
 ---
 
 <Base
@@ -87,59 +92,105 @@ const sectionTitleClass = 'text-sm font-semibold tracking-wide text-neutral-900 
         </ol>
       </div>
 
-      <form action="/api/list-company" method="POST" enctype="multipart/form-data" class="mt-10 space-y-10">
+      <form
+        id="apply-form"
+        action="/api/list-company"
+        method="POST"
+        enctype="multipart/form-data"
+        class="mt-10 [&>fieldset.wizard-step+fieldset.wizard-step]:mt-12"
+        data-wizard
+      >
+        <!-- Progress chrome — visible only when JS activates the wizard -->
+        <div class="wizard-chrome sticky top-0 z-10 -mx-6 mb-8 bg-white/95 px-6 py-4 backdrop-blur supports-[backdrop-filter]:bg-white/80 border-b border-neutral-950/5" data-wizard-chrome hidden>
+          <div class="flex items-center justify-between gap-3">
+            <p class="text-xs font-medium tracking-wide text-neutral-500 uppercase">
+              Step <span data-wizard-current>1</span> of {steps.length}
+            </p>
+            <p class="text-xs text-neutral-500" data-wizard-step-label>{steps[0].title}</p>
+          </div>
+
+          <ol class="mt-3 flex items-center gap-2" aria-label="Application progress">
+            {steps.map((s, i) => (
+              <li class={`flex items-center gap-2 ${i === steps.length - 1 ? 'shrink-0' : 'flex-1'}`} data-wizard-indicator data-step-n={s.n}>
+                <span class="wizard-dot inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold transition-all duration-200">
+                  <span data-dot-num>{s.n}</span>
+                  <svg data-dot-check class="hidden h-3.5 w-3.5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                    <path d="m5 10 3.5 3.5L15 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </span>
+                {i < steps.length - 1 && (
+                  <span class="wizard-rail h-0.5 flex-1 rounded-full bg-neutral-200">
+                    <span class="wizard-rail-fill block h-full w-0 rounded-full bg-emerald-600 transition-[width] duration-300 ease-out"></span>
+                  </span>
+                )}
+              </li>
+            ))}
+          </ol>
+        </div>
+
         <!-- Honeypot (must remain empty) -->
         <div class="hidden" aria-hidden="true">
           <label for="business_fax">Business Fax</label>
           <input type="text" id="business_fax" name="business_fax" tabindex="-1" autocomplete="off" />
         </div>
 
-        <!-- Company Details -->
-        <section class="space-y-6">
+        <!-- ───────── Step 1: Company ───────── -->
+        <fieldset class="wizard-step space-y-8 border-0 p-0" data-step="1" aria-labelledby="step-1-heading">
+          <legend class="sr-only">{steps[0].title}</legend>
           <div>
-            <h2 class={sectionTitleClass}>Company Details</h2>
-            <p class={helpClass}>Tell us about your business. All fields required unless noted.</p>
+            <h2 id="step-1-heading" class="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl">{steps[0].title}</h2>
+            <p class="mt-2 text-sm text-neutral-600">{steps[0].subtitle}</p>
           </div>
 
-          <div>
-            <label for="name" class={labelClass}>Company Name</label>
-            <input type="text" id="name" name="name" required maxlength="200" class={inputClass} />
-          </div>
-
-          <div class="grid gap-6 sm:grid-cols-2">
+          <div class="space-y-6">
             <div>
-              <label for="website_url" class={labelClass}>Website URL</label>
-              <input type="url" id="website_url" name="website_url" required placeholder="https://" class={inputClass} />
+              <label for="name" class={labelClass}>Company Name</label>
+              <input type="text" id="name" name="name" required maxlength="200" class={inputClass} />
             </div>
+
+            <div class="grid gap-6 sm:grid-cols-2">
+              <div>
+                <label for="website_url" class={labelClass}>Website URL</label>
+                <input type="url" id="website_url" name="website_url" required placeholder="https://" class={inputClass} />
+              </div>
+              <div>
+                <label for="phone" class={labelClass}>Phone</label>
+                <input type="tel" id="phone" name="phone" required class={inputClass} />
+              </div>
+            </div>
+
             <div>
-              <label for="phone" class={labelClass}>Phone</label>
-              <input type="tel" id="phone" name="phone" required class={inputClass} />
+              <label for="business_email" class={labelClass}>Business Email</label>
+              <input type="email" id="business_email" name="business_email" required class={inputClass} />
+              <p class={helpClass}>Must be a business domain (not Gmail/Yahoo/Hotmail/etc).</p>
+            </div>
+
+            <div>
+              <label for="years_in_business" class={labelClass}>Years in Business <span class="font-normal text-neutral-400">(optional)</span></label>
+              <input type="number" id="years_in_business" name="years_in_business" min="0" max="200" class={inputClass} />
+            </div>
+
+            <div>
+              <label for="certifications" class={labelClass}>Certifications <span class="font-normal text-neutral-400">(optional, comma-separated)</span></label>
+              <input type="text" id="certifications" name="certifications" placeholder="e.g. CSA, ETL, Health Canada" class={inputClass} />
             </div>
           </div>
+        </fieldset>
 
+        <!-- ───────── Step 2: Where + Services ───────── -->
+        <fieldset class="wizard-step space-y-8 border-0 p-0" data-step="2" aria-labelledby="step-2-heading">
+          <legend class="sr-only">{steps[1].title}</legend>
           <div>
-            <label for="business_email" class={labelClass}>Business Email</label>
-            <input type="email" id="business_email" name="business_email" required class={inputClass} />
-            <p class={helpClass}>Must be a business domain (not Gmail/Yahoo/Hotmail/etc).</p>
+            <h2 id="step-2-heading" class="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl">{steps[1].title}</h2>
+            <p class="mt-2 text-sm text-neutral-600">{steps[1].subtitle}</p>
           </div>
 
-          <div>
-            <label for="years_in_business" class={labelClass}>Years in Business <span class="font-normal text-neutral-400">(optional)</span></label>
-            <input type="number" id="years_in_business" name="years_in_business" min="0" max="200" class={inputClass} />
-          </div>
+          <div class="space-y-6">
+            <div>
+              <p class="text-xs font-semibold tracking-wide text-neutral-500 uppercase">Primary address</p>
+              <p class="mt-1 text-xs text-neutral-500">Canadian suppliers only.</p>
+            </div>
 
-          <div>
-            <label for="certifications" class={labelClass}>Certifications <span class="font-normal text-neutral-400">(optional, comma-separated)</span></label>
-            <input type="text" id="certifications" name="certifications" placeholder="e.g. CSA, ETL, Health Canada" class={inputClass} />
-          </div>
-        </section>
-
-        <!-- Location -->
-        <section class={sectionClass}>
-          <h2 class={sectionTitleClass}>Location</h2>
-          <p class={helpClass}>Your primary business address. Canadian suppliers only.</p>
-
-          <div class="mt-6 space-y-6">
             <div>
               <label for="street" class={labelClass}>Street Address</label>
               <input type="text" id="street" name="street" required class={inputClass} />
@@ -166,127 +217,156 @@ const sectionTitleClass = 'text-sm font-semibold tracking-wide text-neutral-900 
 
             <div>
               <label for="postal" class={labelClass}>Postal Code</label>
-              <input type="text" id="postal" name="postal" required pattern="[A-Za-z]\d[A-Za-z] ?\d[A-Za-z]\d" placeholder="A1A 1A1" class={`${inputClass} max-w-[12rem]`} />
+              <input type="text" id="postal" name="postal" required pattern="[A-Za-z][0-9][A-Za-z] ?[0-9][A-Za-z][0-9]" placeholder="A1A 1A1" class={`${inputClass} max-w-[12rem]`} />
+            </div>
+
+            <div class="border-t border-neutral-950/5 pt-6">
+              <p class="text-xs font-semibold tracking-wide text-neutral-500 uppercase">Services offered</p>
+              <p class="mt-1 text-xs text-neutral-500">Select all that apply — at least one is required.</p>
+
+              <fieldset class="mt-4">
+                <legend class="sr-only">Services</legend>
+                <div class="grid gap-3 sm:grid-cols-2">
+                  {serviceOptions.map((s) => (
+                    <label class="flex items-start gap-3 rounded-lg p-3 ring-1 ring-black/5 hover:ring-emerald-600/40 cursor-pointer transition-shadow has-checked:bg-emerald-50/40 has-checked:ring-emerald-600/50">
+                      <input type="checkbox" name="services" value={s.slug} class="mt-0.5 size-4 rounded border-neutral-300 text-emerald-600 focus:ring-emerald-600" />
+                      <span class="text-sm text-neutral-900">{s.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
             </div>
           </div>
-        </section>
+        </fieldset>
 
-        <!-- Services -->
-        <section class={sectionClass}>
-          <h2 class={sectionTitleClass}>Services Offered</h2>
-          <p class={helpClass}>Select all that apply.</p>
-
-          <fieldset class="mt-6">
-            <legend class="sr-only">Services</legend>
-            <div class="grid gap-3 sm:grid-cols-2">
-              {serviceOptions.map((s) => (
-                <label class="flex items-start gap-3 rounded-lg p-3 ring-1 ring-black/5 hover:ring-emerald-600/40 cursor-pointer">
-                  <input type="checkbox" name="services" value={s.slug} class="mt-0.5 size-4 rounded border-neutral-300 text-emerald-600 focus:ring-emerald-600" />
-                  <span class="text-sm text-neutral-900">{s.label}</span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
-        </section>
-
-        <!-- About -->
-        <section class={sectionClass}>
-          <h2 class={sectionTitleClass}>About Your Business</h2>
-          <p class={helpClass}>A short editorial description — between 100 and 500 characters.</p>
-
-          <div class="mt-6">
-            <label for="description" class={labelClass}>Description</label>
-            <textarea id="description" name="description" required rows="5" minlength="100" maxlength="500" class={inputClass} placeholder="What do you do, who do you serve, and what makes you stand out?"></textarea>
+        <!-- ───────── Step 3: Story + FAQs + Logo ───────── -->
+        <fieldset class="wizard-step space-y-8 border-0 p-0" data-step="3" aria-labelledby="step-3-heading">
+          <legend class="sr-only">{steps[2].title}</legend>
+          <div>
+            <h2 id="step-3-heading" class="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl">{steps[2].title}</h2>
+            <p class="mt-2 text-sm text-neutral-600">{steps[2].subtitle}</p>
           </div>
-        </section>
 
-        <!-- FAQs -->
-        <section class={sectionClass}>
-          <h2 class={sectionTitleClass}>Frequently Asked Questions</h2>
-          <p class={helpClass}>Provide at least 1 Q&amp;A. Up to 3 total. These appear on your public profile.</p>
-
-          <div class="mt-6 space-y-6">
-            <div class="space-y-3 rounded-lg ring-1 ring-black/5 p-4">
-              <div>
-                <label for="faq_q_1" class={labelClass}>Question 1 <span class="text-emerald-600">*</span></label>
-                <input type="text" id="faq_q_1" name="faq_q_1" required maxlength="200" class={inputClass} />
-              </div>
-              <div>
-                <label for="faq_a_1" class={labelClass}>Answer 1 <span class="text-emerald-600">*</span></label>
-                <textarea id="faq_a_1" name="faq_a_1" required rows="3" maxlength="800" class={inputClass}></textarea>
-              </div>
-            </div>
-
-            <div class="space-y-3 rounded-lg ring-1 ring-black/5 p-4">
-              <div>
-                <label for="faq_q_2" class={labelClass}>Question 2 <span class="font-normal text-neutral-400">(optional)</span></label>
-                <input type="text" id="faq_q_2" name="faq_q_2" maxlength="200" class={inputClass} />
-              </div>
-              <div>
-                <label for="faq_a_2" class={labelClass}>Answer 2</label>
-                <textarea id="faq_a_2" name="faq_a_2" rows="3" maxlength="800" class={inputClass}></textarea>
-              </div>
-            </div>
-
-            <div class="space-y-3 rounded-lg ring-1 ring-black/5 p-4">
-              <div>
-                <label for="faq_q_3" class={labelClass}>Question 3 <span class="font-normal text-neutral-400">(optional)</span></label>
-                <input type="text" id="faq_q_3" name="faq_q_3" maxlength="200" class={inputClass} />
-              </div>
-              <div>
-                <label for="faq_a_3" class={labelClass}>Answer 3</label>
-                <textarea id="faq_a_3" name="faq_a_3" rows="3" maxlength="800" class={inputClass}></textarea>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Logo -->
-        <section class={sectionClass}>
-          <h2 class={sectionTitleClass}>Logo</h2>
-          <p class={helpClass}>Optional. PNG/JPG/SVG, max 1MB. Square or wordmark works best.</p>
-          <div class="mt-6">
-            <label for="logo" class={labelClass}>Upload logo</label>
-            <input type="file" id="logo" name="logo" accept="image/png,image/jpeg,image/svg+xml" class="mt-1.5 block w-full text-sm text-neutral-700 file:mr-4 file:rounded-md file:border-0 file:bg-emerald-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-emerald-700 hover:file:bg-emerald-100" />
-            <p class={helpClass}>PNG/JPG/SVG, max 1MB.</p>
-          </div>
-        </section>
-
-        <!-- Submitter Info -->
-        <section class={sectionClass}>
-          <h2 class={sectionTitleClass}>Submitter Info</h2>
-          <p class={helpClass}>Who's filling this out? We'll use this only to follow up about your application.</p>
-
-          <div class="mt-6 grid gap-6 sm:grid-cols-2">
+          <div class="space-y-6">
             <div>
-              <label for="submitted_by_name" class={labelClass}>Your Name</label>
-              <input type="text" id="submitted_by_name" name="submitted_by_name" required class={inputClass} />
+              <div class="flex items-baseline justify-between">
+                <label for="description" class={labelClass}>About your business</label>
+                <span class="text-xs text-neutral-500"><span data-char-count>0</span> / 500</span>
+              </div>
+              <textarea id="description" name="description" required rows="5" minlength="100" maxlength="500" class={inputClass} placeholder="What do you do, who do you serve, and what makes you stand out?"></textarea>
+              <p class={helpClass}>Between 100 and 500 characters.</p>
             </div>
-            <div>
-              <label for="submitted_by_email" class={labelClass}>Your Email</label>
-              <input type="email" id="submitted_by_email" name="submitted_by_email" required class={inputClass} />
+
+            <div class="border-t border-neutral-950/5 pt-6">
+              <p class="text-xs font-semibold tracking-wide text-neutral-500 uppercase">Frequently asked questions</p>
+              <p class="mt-1 text-xs text-neutral-500">At least 1 Q&amp;A, up to 3. These appear on your public profile.</p>
+
+              <div class="mt-4 space-y-4">
+                <div class="space-y-3 rounded-lg ring-1 ring-black/5 p-4">
+                  <div>
+                    <label for="faq_q_1" class={labelClass}>Question 1 <span class="text-emerald-600">*</span></label>
+                    <input type="text" id="faq_q_1" name="faq_q_1" required maxlength="200" class={inputClass} />
+                  </div>
+                  <div>
+                    <label for="faq_a_1" class={labelClass}>Answer 1 <span class="text-emerald-600">*</span></label>
+                    <textarea id="faq_a_1" name="faq_a_1" required rows="3" maxlength="800" class={inputClass}></textarea>
+                  </div>
+                </div>
+
+                <div class="space-y-3 rounded-lg ring-1 ring-black/5 p-4">
+                  <div>
+                    <label for="faq_q_2" class={labelClass}>Question 2 <span class="font-normal text-neutral-400">(optional)</span></label>
+                    <input type="text" id="faq_q_2" name="faq_q_2" maxlength="200" class={inputClass} />
+                  </div>
+                  <div>
+                    <label for="faq_a_2" class={labelClass}>Answer 2</label>
+                    <textarea id="faq_a_2" name="faq_a_2" rows="3" maxlength="800" class={inputClass}></textarea>
+                  </div>
+                </div>
+
+                <div class="space-y-3 rounded-lg ring-1 ring-black/5 p-4">
+                  <div>
+                    <label for="faq_q_3" class={labelClass}>Question 3 <span class="font-normal text-neutral-400">(optional)</span></label>
+                    <input type="text" id="faq_q_3" name="faq_q_3" maxlength="200" class={inputClass} />
+                  </div>
+                  <div>
+                    <label for="faq_a_3" class={labelClass}>Answer 3</label>
+                    <textarea id="faq_a_3" name="faq_a_3" rows="3" maxlength="800" class={inputClass}></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="border-t border-neutral-950/5 pt-6">
+              <p class="text-xs font-semibold tracking-wide text-neutral-500 uppercase">Logo <span class="font-normal normal-case tracking-normal text-neutral-400">(optional)</span></p>
+              <p class="mt-1 text-xs text-neutral-500">PNG or JPG, max 1MB. Square or wordmark works best.</p>
+              <div class="mt-4">
+                <label for="logo" class="sr-only">Upload logo</label>
+                <input type="file" id="logo" name="logo" accept="image/png,image/jpeg" class="block w-full text-sm text-neutral-700 file:mr-4 file:rounded-md file:border-0 file:bg-emerald-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-emerald-700 hover:file:bg-emerald-100" />
+              </div>
             </div>
           </div>
-        </section>
+        </fieldset>
 
-        <!-- Turnstile + Submit -->
-        <section class={sectionClass}>
-          {turnstileSiteKey ? (
-            <div class="cf-turnstile" data-sitekey={turnstileSiteKey}></div>
-          ) : (
-            <div class="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900">
-              Turnstile not configured (dev). Submissions will go through without bot challenge.
+        <!-- ───────── Step 4: Submitter + Turnstile + Submit ───────── -->
+        <fieldset class="wizard-step space-y-8 border-0 p-0" data-step="4" aria-labelledby="step-4-heading">
+          <legend class="sr-only">{steps[3].title}</legend>
+          <div>
+            <h2 id="step-4-heading" class="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl">{steps[3].title}</h2>
+            <p class="mt-2 text-sm text-neutral-600">{steps[3].subtitle}</p>
+          </div>
+
+          <div class="space-y-6">
+            <div class="grid gap-6 sm:grid-cols-2">
+              <div>
+                <label for="submitted_by_name" class={labelClass}>Your Name</label>
+                <input type="text" id="submitted_by_name" name="submitted_by_name" required class={inputClass} />
+              </div>
+              <div>
+                <label for="submitted_by_email" class={labelClass}>Your Email</label>
+                <input type="email" id="submitted_by_email" name="submitted_by_email" required class={inputClass} />
+              </div>
             </div>
-          )}
 
-          <button type="submit" class="mt-6 w-full rounded-md bg-emerald-600 px-3 py-2.5 text-sm font-medium text-white hover:bg-emerald-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600">
-            Submit application
+            <div class="border-t border-neutral-950/5 pt-6">
+              {turnstileSiteKey ? (
+                <div class="cf-turnstile" data-sitekey={turnstileSiteKey}></div>
+              ) : (
+                <div class="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900">
+                  Turnstile not configured (dev). Submissions will go through without bot challenge.
+                </div>
+              )}
+
+              <button type="submit" class="mt-6 w-full rounded-md bg-emerald-600 px-3 py-2.5 text-sm font-medium text-white hover:bg-emerald-500 active:bg-emerald-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 transition-colors">
+                Submit application
+              </button>
+
+              <p class="mt-3 text-center text-xs text-neutral-500">
+                By submitting, you confirm the information is accurate and that you're authorized to apply on behalf of your business.
+              </p>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- Wizard nav (only rendered with JS) -->
+        <div class="wizard-nav mt-10 flex items-center justify-between gap-4" data-wizard-nav hidden>
+          <button
+            type="button"
+            data-wizard-back
+            class="rounded-md px-3 py-2.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100 disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
+            disabled
+          >
+            ← Back
           </button>
-
-          <p class="mt-3 text-center text-xs text-neutral-500">
-            By submitting, you confirm the information is accurate and that you're authorized to apply on behalf of your business.
-          </p>
-        </section>
+          <button
+            type="button"
+            data-wizard-next
+            class="rounded-md bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-neutral-800 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 transition-all"
+          >
+            Continue
+            <span aria-hidden="true" class="ml-1">→</span>
+          </button>
+        </div>
       </form>
     </div>
   </main>
@@ -297,3 +377,296 @@ const sectionTitleClass = 'text-sm font-semibold tracking-wide text-neutral-900 
 
   <Footer />
 </Base>
+
+<style>
+  /* Wizard activation: only when JS adds [data-wizard-active] to <form> */
+  form[data-wizard-active] .wizard-step:not([data-current]) {
+    display: none;
+  }
+
+  form[data-wizard-active] .wizard-step[data-current] {
+    animation: wizardEnter 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  form[data-wizard-active] .wizard-step[data-leaving] {
+    display: block;
+    animation: wizardLeave 160ms cubic-bezier(0.4, 0, 1, 1) both;
+  }
+
+  /* Backward direction variants */
+  form[data-wizard-active][data-wizard-direction="back"] .wizard-step[data-current] {
+    animation-name: wizardEnterBack;
+  }
+  form[data-wizard-active][data-wizard-direction="back"] .wizard-step[data-leaving] {
+    animation-name: wizardLeaveBack;
+  }
+
+  @keyframes wizardEnter {
+    from { opacity: 0; transform: translateX(12px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes wizardLeave {
+    from { opacity: 1; transform: translateX(0); }
+    to   { opacity: 0; transform: translateX(-12px); }
+  }
+  @keyframes wizardEnterBack {
+    from { opacity: 0; transform: translateX(-12px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes wizardLeaveBack {
+    from { opacity: 1; transform: translateX(0); }
+    to   { opacity: 0; transform: translateX(12px); }
+  }
+
+  /* Step indicator dot states */
+  [data-wizard-indicator] .wizard-dot {
+    background: white;
+    color: rgb(115 115 115);
+    box-shadow: inset 0 0 0 1px rgb(229 229 229);
+  }
+  [data-wizard-indicator][data-state="current"] .wizard-dot {
+    color: rgb(5 150 105);
+    background: white;
+    box-shadow: inset 0 0 0 1.5px rgb(5 150 105), 0 0 0 3px rgba(5, 150, 105, 0.12);
+    animation: dotPop 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  [data-wizard-indicator][data-state="complete"] .wizard-dot {
+    background: rgb(5 150 105);
+    color: white;
+    box-shadow: inset 0 0 0 1px rgb(5 150 105);
+  }
+  [data-wizard-indicator][data-state="complete"] [data-dot-num] { display: none; }
+  [data-wizard-indicator][data-state="complete"] [data-dot-check] { display: inline-block; }
+
+  [data-wizard-indicator][data-state="complete"] .wizard-rail-fill,
+  [data-wizard-indicator][data-state="current-rail-fill"] .wizard-rail-fill {
+    width: 100%;
+  }
+
+  @keyframes dotPop {
+    0%   { transform: scale(0.94); }
+    100% { transform: scale(1); }
+  }
+
+  /* Respect reduced-motion */
+  @media (prefers-reduced-motion: reduce) {
+    form[data-wizard-active] .wizard-step[data-current],
+    form[data-wizard-active] .wizard-step[data-leaving] {
+      animation: wizardFade 120ms linear both !important;
+    }
+    [data-wizard-indicator][data-state="current"] .wizard-dot {
+      animation: none;
+    }
+    .wizard-rail-fill {
+      transition: none !important;
+    }
+    @keyframes wizardFade {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    const form = document.getElementById('apply-form');
+    if (!form) return;
+
+    const steps = Array.from(form.querySelectorAll('.wizard-step'));
+    if (steps.length < 2) return;
+
+    const nav = form.querySelector('[data-wizard-nav]');
+    const chrome = form.querySelector('[data-wizard-chrome]');
+    const backBtn = form.querySelector('[data-wizard-back]');
+    const nextBtn = form.querySelector('[data-wizard-next]');
+    const currentLabel = form.querySelector('[data-wizard-current]');
+    const stepLabel = form.querySelector('[data-wizard-step-label]');
+    const indicators = Array.from(form.querySelectorAll('[data-wizard-indicator]'));
+    const charCount = form.querySelector('[data-char-count]');
+    const description = form.querySelector('#description');
+    const serviceInputs = Array.from(form.querySelectorAll('input[name="services"]'));
+
+    const titles = steps.map((step) => {
+      const h2 = step.querySelector('h2');
+      return h2 ? h2.textContent.trim() : 'Step';
+    });
+
+    let current = 0;
+    let animating = false;
+
+    function activate() {
+      form.setAttribute('data-wizard-active', '');
+      form.setAttribute('novalidate', '');
+      if (nav) nav.hidden = false;
+      if (chrome) chrome.hidden = false;
+      steps.forEach((s, i) => {
+        if (i === 0) s.setAttribute('data-current', '');
+        else s.removeAttribute('data-current');
+      });
+      updateChrome();
+    }
+
+    function updateChrome() {
+      if (currentLabel) currentLabel.textContent = String(current + 1);
+      if (stepLabel) stepLabel.textContent = titles[current];
+
+      indicators.forEach((ind, i) => {
+        if (i < current) ind.setAttribute('data-state', 'complete');
+        else if (i === current) ind.setAttribute('data-state', 'current');
+        else ind.setAttribute('data-state', 'upcoming');
+      });
+
+      if (backBtn) backBtn.disabled = current === 0;
+
+      if (nextBtn) {
+        const isLast = current === steps.length - 1;
+        nextBtn.hidden = isLast;
+      }
+    }
+
+    function validateCurrentStep() {
+      const step = steps[current];
+      const fields = Array.from(step.querySelectorAll('input, select, textarea'));
+      const firstService = step.querySelector('input[name="services"]');
+      if (firstService) firstService.setCustomValidity('');
+
+      // Native HTML validity first
+      for (const field of fields) {
+        if (field.disabled || field.type === 'hidden') continue;
+        if (!field.checkValidity()) {
+          field.reportValidity();
+          field.focus({ preventScroll: false });
+          return false;
+        }
+      }
+
+      // Step 2: require at least one service checkbox
+      if (current === 1) {
+        const services = step.querySelectorAll('input[name="services"]:checked');
+        if (services.length === 0) {
+          if (firstService) {
+            firstService.setCustomValidity('Please select at least one service.');
+            firstService.reportValidity();
+            firstService.focus();
+          }
+          return false;
+        }
+      }
+
+      // Step 3: description min length
+      if (current === 2 && description) {
+        const len = description.value.trim().length;
+        if (len < 100) {
+          description.setCustomValidity(`Description must be at least 100 characters (you have ${len}).`);
+          description.reportValidity();
+          description.focus();
+          description.addEventListener('input', () => description.setCustomValidity(''), { once: true });
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    function goTo(next, direction) {
+      if (animating || next === current || next < 0 || next >= steps.length) return;
+      animating = true;
+
+      form.setAttribute('data-wizard-direction', direction);
+      const outgoing = steps[current];
+      const incoming = steps[next];
+
+      outgoing.setAttribute('data-leaving', '');
+      outgoing.removeAttribute('data-current');
+
+      const cleanup = () => {
+        outgoing.removeEventListener('animationend', cleanup);
+        outgoing.removeAttribute('data-leaving');
+        incoming.setAttribute('data-current', '');
+        current = next;
+        updateChrome();
+
+        // Focus first focusable in new step (skip on touch keyboards to avoid jank)
+        const focusable = incoming.querySelector('input:not([type=hidden]), select, textarea, button');
+        if (focusable && !matchMedia('(pointer: coarse)').matches) {
+          focusable.focus({ preventScroll: true });
+        }
+
+        // Scroll progress chrome into view (top of form)
+        const chromeEl = form.querySelector('[data-wizard-chrome]');
+        if (chromeEl) chromeEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        animating = false;
+      };
+      outgoing.addEventListener('animationend', cleanup, { once: true });
+
+      // Safety net if animationend never fires (reduced-motion edge cases)
+      setTimeout(() => {
+        if (animating && outgoing.hasAttribute('data-leaving')) cleanup();
+      }, 400);
+    }
+
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        if (animating) return;
+        if (!validateCurrentStep()) return;
+        goTo(current + 1, 'forward');
+      });
+    }
+
+    if (backBtn) {
+      backBtn.addEventListener('click', () => {
+        if (animating) return;
+        goTo(current - 1, 'back');
+      });
+    }
+
+    serviceInputs.forEach((input) => {
+      input.addEventListener('change', () => {
+        const first = serviceInputs[0];
+        if (first) first.setCustomValidity('');
+      });
+    });
+
+    // Submit guard: on the last step, validate everything before letting it through.
+    // Earlier steps shouldn't be reachable for submit because the submit button is inside step 4.
+    form.addEventListener('submit', (e) => {
+      // If somehow not on last step, prevent and advance instead
+      if (current !== steps.length - 1) {
+        e.preventDefault();
+        if (validateCurrentStep()) goTo(current + 1, 'forward');
+        return;
+      }
+      // On last step, run validateCurrentStep + full form check
+      if (!validateCurrentStep()) {
+        e.preventDefault();
+        return;
+      }
+      if (!form.checkValidity()) {
+        e.preventDefault();
+        // Find first invalid field across all steps and jump to its step
+        for (let i = 0; i < steps.length; i++) {
+          const bad = steps[i].querySelector(':invalid');
+          if (bad) {
+            if (i !== current) goTo(i, i > current ? 'forward' : 'back');
+            setTimeout(() => bad.reportValidity(), 250);
+            return;
+          }
+        }
+      }
+    });
+
+    // Live character counter for description
+    if (description && charCount) {
+      const update = () => {
+        const len = description.value.length;
+        charCount.textContent = String(len);
+        charCount.style.color = len >= 100 && len <= 500 ? 'rgb(5 150 105)' : '';
+      };
+      description.addEventListener('input', update);
+      update();
+    }
+
+    activate();
+  })();
+</script>
