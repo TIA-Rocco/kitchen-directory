@@ -112,14 +112,27 @@ npm test         # Run Vitest unit tests (20 tests)
 ## Environment Variables (Vercel)
 - `PUBLIC_SUPABASE_URL` - https://awksvtteuzrzwazqxxyi.supabase.co
 - `PUBLIC_SUPABASE_ANON_KEY` - Supabase anon JWT
+- `PUBLIC_SITE_URL` - https://kitchen-directory.vercel.app (origin used to build admin magic-link callbacks; update at DNS cutover to https://kitchenequipment.ca)
 - `MAILGUN_API_KEY` - Mailgun transactional email key
 - `MAILGUN_DOMAIN` - kitchenequipment.ca
+- `ADMIN_EMAILS` - comma-separated allow-list for admin magic-link sign-in
+
+## Admin Auth (magic link)
+- `/admin/login` posts to `/api/admin/login` which calls `supabase.auth.signInWithOtp({ shouldCreateUser: false, options: { emailRedirectTo } })`. The callback is built from `PUBLIC_SITE_URL` (falling back to `url.origin`) → `/admin/auth/callback?next=…`.
+- Admins must be **pre-provisioned** in `auth.users` via the Supabase Admin API (`shouldCreateUser:false`). Emails not in `ADMIN_EMAILS` are silently no-op'd to avoid enumeration / email-bombing.
+- **Supabase Auth → URL Configuration** must include every callback host in the **Redirect URLs** allow-list. If `emailRedirectTo` isn't allow-listed, Supabase silently rewrites the link to the **Site URL** and the PKCE `code` arrives at `/` with nothing to exchange it. Current entries:
+  - `https://kitchen-directory.vercel.app/admin/auth/callback`
+  - `https://kitchen-directory.vercel.app/**`
+  - `http://localhost:4321/admin/auth/callback`
+- Site URL is `https://kitchen-directory.vercel.app`. Update at DNS cutover.
+- Email send rate limit is configured under Auth → Rate Limits. The default shared SMTP (`mail.app.supabase.io`) is dev-only and caps around 2/hr — for production use, plug **Mailgun SMTP** into Auth → SMTP Settings (creds under Mailgun → Sending → Domain settings → SMTP credentials, not the API key).
+- `PUBLIC_SITE_URL` is inlined by Astro at build time — after changing it in Vercel, **redeploy** before the new value takes effect.
 
 ## Deploy Process
 1. Push to `feat/*` branch for preview deploy
 2. Merge to `main` for production deploy
 3. Vercel auto-builds Astro SSG pages (~60-90s)
-4. Review approval in Supabase triggers rebuild via deploy hook (TBD: wire pg_net)
+4. Review approval (and other admin approval flows) updates the row → DB trigger calls `fire_deploy_hook()` → pg_net POSTs to the Vercel deploy hook (URL stored in Supabase Vault as `vercel_deploy_hook`) → Vercel rebuilds SSG in ~60-90s.
 
 ## Testing
 - **Unit tests:** 20 Vitest tests covering all Schema.org JSON-LD generators
