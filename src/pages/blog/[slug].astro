@@ -32,6 +32,7 @@ if (post.linked_companies && post.linked_companies.length > 0) {
     .from('companies')
     .select('*')
     .in('id', post.linked_companies)
+    .is('deleted_at', null)
     .order('ranking_score', { ascending: false });
   linkedCompanies = (companiesData || []) as Company[];
 }

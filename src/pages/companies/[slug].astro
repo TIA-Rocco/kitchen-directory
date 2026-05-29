@@ -13,7 +13,7 @@ import { supabase } from '../../lib/supabase';
 import InfoTooltip from '../../components/InfoTooltip.astro';
 
 export async function getStaticPaths() {
-  const { data: companies } = await supabase.from('companies').select('slug');
+  const { data: companies } = await supabase.from('companies').select('slug').is('deleted_at', null);
   return (companies || []).map((c) => ({ params: { slug: c.slug } }));
 }
 
@@ -24,6 +24,7 @@ const { data: companyData } = await supabase
   .from('companies')
   .select('*')
   .eq('slug', slug)
+  .is('deleted_at', null)
   .single();
 
 if (!companyData) return Astro.redirect('/404');

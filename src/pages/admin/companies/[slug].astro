@@ -2,12 +2,13 @@
 export const prerender = false;
 
 import Admin from '../../../layouts/Admin.astro';
+import CompanyForm from '../../../components/CompanyForm.astro';
 import { supabaseAdmin } from '../../../lib/supabase-server';
 
 const { slug } = Astro.params;
 const { data: company, error } = await supabaseAdmin
   .from('companies')
-  .select('slug, name, ranking_score, ranking_breakdown, is_featured')
+  .select('*')
   .eq('slug', slug)
   .maybeSingle();
 
@@ -15,7 +16,10 @@ if (error || !company) {
   return new Response('Not found', { status: 404 });
 }
 
-// Criteria + weights (must mirror DB trigger formula). Order matters for display.
+const { data: cats } = await supabaseAdmin.from('service_categories').select('name').order('name');
+const serviceCategories = (cats ?? []).map((c) => c.name);
+
+// Ranking criteria + weights (mirror DB trigger formula).
 const CRITERIA = [
   { key: 'service_range', label: 'Service Range', weight: 0.2 },
   { key: 'customer_reviews', label: 'Customer Reviews', weight: 0.25 },
@@ -26,143 +30,137 @@ const CRITERIA = [
 ] as const;
 
 const breakdown = (company.ranking_breakdown ?? {}) as Record<string, number>;
+const isDeleted = !!company.deleted_at;
 ---
 
 <Admin title={`Edit · ${company.name}`} activeNav="companies">
-  <div class="mb-4">
+  <div class="mb-4 flex items-center gap-3">
     <a href="/admin/companies" class="text-sm text-emerald-700 hover:text-emerald-800">← All companies</a>
+    {isDeleted && (
+      <span class="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 ring-1 ring-red-200">Archived</span>
+    )}
+    <a href={`/companies/${company.slug}`} target="_blank" rel="noopener" class="ml-auto text-xs text-emerald-700 hover:text-emerald-800">View public profile →</a>
   </div>
 
-  <div class="grid gap-6 lg:grid-cols-3">
-    <section class="lg:col-span-2 rounded-xl bg-white p-6 ring-1 ring-black/5">
-      <h2 class="text-sm font-semibold text-neutral-900">Ranking breakdown</h2>
-      <p class="mt-1 text-xs text-neutral-500">
-        Score each criterion 0–10. The composite score is a weighted average and recomputes
-        automatically on save.
-      </p>
+  <div class="space-y-6">
+    <section class="rounded-xl bg-white p-6 ring-1 ring-black/5">
+      <h2 class="text-sm font-semibold text-neutral-900">Profile</h2>
+      <p class="mt-1 text-xs text-neutral-500">Slug (<span class="font-mono">{company.slug}</span>) is fixed to protect the public URL and structured data. Saving rebuilds the site.</p>
+      <div class="mt-4">
+        <CompanyForm
+          company={company}
+          serviceCategories={serviceCategories}
+          action={`/api/admin/companies/${company.slug}/profile`}
+          mode="edit"
+          submitLabel="Save profile"
+        />
+      </div>
+    </section>
 
+    <section class="rounded-xl bg-white p-6 ring-1 ring-black/5">
+      <h2 class="text-sm font-semibold text-neutral-900">Ranking breakdown</h2>
+      <p class="mt-1 text-xs text-neutral-500">Score each criterion 0–10. The composite recomputes automatically on save.</p>
       <form id="ranking-form" class="mt-5 space-y-4" data-slug={company.slug}>
         {CRITERIA.map((c) => (
           <div class="flex items-center gap-4">
             <label for={`r_${c.key}`} class="w-56 text-sm text-neutral-800">
-              {c.label}
-              <span class="ml-1 text-xs text-neutral-500">({Math.round(c.weight * 100)}%)</span>
+              {c.label}<span class="ml-1 text-xs text-neutral-500">({Math.round(c.weight * 100)}%)</span>
             </label>
-            <input
-              id={`r_${c.key}`}
-              name={c.key}
-              data-criterion={c.key}
-              data-weight={c.weight}
-              type="number"
-              min="0"
-              max="10"
-              step="0.1"
-              required
+            <input id={`r_${c.key}`} name={c.key} data-criterion={c.key} data-weight={c.weight}
+              type="number" min="0" max="10" step="0.1" required
               value={typeof breakdown[c.key] === 'number' ? breakdown[c.key] : 0}
-              class="w-32 rounded-lg px-3 py-2 text-sm ring-1 ring-black/10 focus:outline-2 focus:-outline-offset-1 focus:outline-emerald-600"
-            />
+              class="w-32 rounded-lg px-3 py-2 text-sm ring-1 ring-black/10 focus:outline-2 focus:-outline-offset-1 focus:outline-emerald-600" />
           </div>
         ))}
-
         <div class="mt-6 flex items-center justify-between border-t border-neutral-200 pt-4">
-          <button
-            type="submit"
-            class="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500"
-          >
-            Save
-          </button>
+          <button type="submit" class="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500">Save ranking</button>
           <div class="text-sm text-neutral-600">
-            Live preview:
-            <span id="preview-score" class="ml-1 font-semibold text-neutral-900">—</span>
+            Live preview: <span id="preview-score" class="ml-1 font-semibold text-neutral-900">—</span>
             <span class="ml-2 text-xs text-neutral-500">/ 10</span>
           </div>
         </div>
       </form>
     </section>
 
-    <aside class="rounded-xl bg-white p-6 ring-1 ring-black/5">
-      <h2 class="text-sm font-semibold text-neutral-900">Current</h2>
-      <dl class="mt-3 space-y-2 text-sm">
-        <div>
-          <dt class="text-xs uppercase tracking-wide text-neutral-500">Saved score</dt>
-          <dd class="mt-0.5 text-2xl font-semibold text-neutral-900">
-            {typeof company.ranking_score === 'number' ? company.ranking_score.toFixed(1) : '—'}
-          </dd>
+    <section class="rounded-xl bg-white p-6 ring-1 ring-red-200">
+      <h2 class="text-sm font-semibold text-red-700">Danger zone</h2>
+      {isDeleted ? (
+        <div class="mt-3 flex items-center justify-between gap-4">
+          <p class="text-sm text-neutral-600">This company is archived and hidden from the public site.</p>
+          <button type="button" data-company-action data-mode="restore" data-slug={company.slug}
+            class="rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">Restore</button>
         </div>
-        <div>
-          <dt class="text-xs uppercase tracking-wide text-neutral-500">Slug</dt>
-          <dd class="mt-0.5 font-mono text-xs text-neutral-700">{company.slug}</dd>
+      ) : (
+        <div class="mt-3 flex items-center justify-between gap-4">
+          <p class="text-sm text-neutral-600">Archive (soft delete) hides this company from the public site. Reviews and history are preserved and it can be restored.</p>
+          <button type="button" data-company-action data-mode="delete" data-slug={company.slug} data-name={company.name}
+            class="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-500">Archive company</button>
         </div>
-        <div>
-          <dt class="text-xs uppercase tracking-wide text-neutral-500">Featured</dt>
-          <dd class="mt-0.5">{company.is_featured ? 'Yes' : 'No'}</dd>
-        </div>
-      </dl>
-      <a
-        href={`/companies/${company.slug}`}
-        target="_blank"
-        rel="noopener"
-        class="mt-4 inline-flex text-xs text-emerald-700 hover:text-emerald-800"
-      >
-        View public profile →
-      </a>
-    </aside>
+      )}
+    </section>
   </div>
 
   <script>
+    // Ranking form
     const form = document.getElementById('ranking-form') as HTMLFormElement | null;
     const preview = document.getElementById('preview-score');
     if (form && preview) {
       const slug = form.getAttribute('data-slug')!;
       const inputs = Array.from(form.querySelectorAll<HTMLInputElement>('input[data-criterion]'));
-
       const recompute = () => {
-        let total = 0;
-        let weightSum = 0;
+        let total = 0, weightSum = 0;
         for (const i of inputs) {
           const v = parseFloat(i.value);
           const w = parseFloat(i.getAttribute('data-weight') || '0');
-          if (Number.isFinite(v) && Number.isFinite(w)) {
-            total += v * w;
-            weightSum += w;
-          }
+          if (Number.isFinite(v) && Number.isFinite(w)) { total += v * w; weightSum += w; }
         }
-        const score = weightSum > 0 ? total / weightSum : 0;
-        (preview as HTMLElement).textContent = score.toFixed(2);
+        (preview as HTMLElement).textContent = (weightSum > 0 ? total / weightSum : 0).toFixed(2);
       };
       inputs.forEach((i) => i.addEventListener('input', recompute));
       recompute();
-
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const payload: Record<string, number> = {};
         for (const i of inputs) {
           const v = parseFloat(i.value);
-          if (!Number.isFinite(v) || v < 0 || v > 10) {
-            (window as any).showToast?.(`${i.name} must be 0–10`, 'error');
-            return;
-          }
+          if (!Number.isFinite(v) || v < 0 || v > 10) { (window as any).showToast?.(`${i.name} must be 0–10`, 'error'); return; }
           payload[i.getAttribute('data-criterion')!] = v;
         }
         const btn = form.querySelector<HTMLButtonElement>('button[type="submit"]');
         if (btn) btn.disabled = true;
         try {
           const res = await fetch(`/api/admin/companies/${slug}/ranking`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
           });
           const data = await res.json().catch(() => ({}));
-          if (!res.ok) {
-            (window as any).showToast?.(data?.error || 'Save failed', 'error');
-          } else {
-            (window as any).showToast?.('Saved. Deploy queued.');
-          }
-        } catch {
-          (window as any).showToast?.('Network error', 'error');
-        } finally {
-          if (btn) btn.disabled = false;
+          (window as any).showToast?.(res.ok ? 'Saved. Deploy queued.' : (data?.error || 'Save failed'), res.ok ? 'success' : 'error');
+        } catch { (window as any).showToast?.('Network error', 'error'); } finally { if (btn) btn.disabled = false; }
+      });
+    }
+
+    // Danger zone (archive / restore) — type-to-confirm on delete.
+    const dangerBtn = document.querySelector<HTMLButtonElement>('[data-company-action]');
+    if (dangerBtn) {
+      dangerBtn.addEventListener('click', async () => {
+        const slug = dangerBtn.getAttribute('data-slug')!;
+        const mode = dangerBtn.getAttribute('data-mode');
+        if (mode === 'delete') {
+          const name = dangerBtn.getAttribute('data-name') ?? '';
+          const typed = prompt(`This hides the company from the live site. Type the company name to confirm:\n\n${name}`);
+          if (typed === null) return;
+          if (typed.trim() !== name) { (window as any).showToast?.('Name did not match. Cancelled.', 'error'); return; }
         }
+        dangerBtn.disabled = true;
+        try {
+          const res = await fetch(`/api/admin/companies/${slug}/delete`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(mode === 'restore' ? { action: 'restore' } : {}),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) { (window as any).showToast?.(data?.error || 'Failed', 'error'); dangerBtn.disabled = false; return; }
+          (window as any).showToast?.(mode === 'restore' ? 'Restored. Deploy queued.' : 'Archived. Deploy queued.');
+          setTimeout(() => window.location.reload(), 1000);
+        } catch { (window as any).showToast?.('Network error', 'error'); dangerBtn.disabled = false; }
       });
     }
   </script>

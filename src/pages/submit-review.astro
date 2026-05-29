@@ -12,6 +12,7 @@ const services = (serviceCategories || []).map((s) => s.name);
 const { data: companiesData } = await supabase
   .from('companies')
   .select('id, name, slug')
+  .is('deleted_at', null)
   .order('ranking_score', { ascending: false });
 const companyOptions = (companiesData || []).map((c) => ({ id: c.id, slug: c.slug, name: c.name }));
 ---

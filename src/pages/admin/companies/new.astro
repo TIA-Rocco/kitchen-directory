@@ -1,0 +1,28 @@
+---
+export const prerender = false;
+
+import Admin from '../../../layouts/Admin.astro';
+import CompanyForm from '../../../components/CompanyForm.astro';
+import { supabaseAdmin } from '../../../lib/supabase-server';
+
+const { data: cats } = await supabaseAdmin.from('service_categories').select('name').order('name');
+const serviceCategories = (cats ?? []).map((c) => c.name);
+---
+
+<Admin title="New company" activeNav="companies">
+  <div class="mb-4">
+    <a href="/admin/companies" class="text-sm text-emerald-700 hover:text-emerald-800">← All companies</a>
+  </div>
+  <section class="rounded-xl bg-white p-6 ring-1 ring-black/5">
+    <h2 class="text-sm font-semibold text-neutral-900">New company</h2>
+    <p class="mt-1 text-xs text-neutral-500">The slug is generated from the name. New companies start with a zero ranking (edit it after). Creating rebuilds the site.</p>
+    <div class="mt-4">
+      <CompanyForm
+        serviceCategories={serviceCategories}
+        action="/api/admin/companies/create"
+        mode="create"
+        submitLabel="Create company"
+      />
+    </div>
+  </section>
+</Admin>

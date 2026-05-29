@@ -1,0 +1,195 @@
+---
+// Shared company profile form for admin edit + create. Slug is intentionally
+// NOT editable (immutable public URL + Schema.org @id). Posts JSON to `action`.
+interface FaqItem { question: string; answer: string }
+interface CompanyLike {
+  name?: string;
+  description?: string;
+  website_url?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  logo_url?: string | null;
+  is_featured?: boolean;
+  address?: Record<string, string>;
+  services?: string[];
+  faq?: FaqItem[];
+}
+interface Props {
+  company?: CompanyLike;
+  serviceCategories: string[];
+  action: string;
+  mode: 'edit' | 'create';
+  submitLabel: string;
+}
+const { company = {}, serviceCategories, action, mode, submitLabel } = Astro.props;
+const addr = (company.address ?? {}) as Record<string, string>;
+const selected = new Set(company.services ?? []);
+const faqs = (company.faq ?? []) as FaqItem[];
+const inputCls = 'mt-1.5 w-full rounded-lg px-3 py-2 text-sm ring-1 ring-black/10 focus:outline-2 focus:-outline-offset-1 focus:outline-emerald-600';
+---
+
+<form data-company-form data-action={action} data-mode={mode} class="space-y-5">
+  <div>
+    <label class="text-sm font-medium text-neutral-900" for="cf-name">Company name</label>
+    <input id="cf-name" data-field="name" type="text" required value={company.name ?? ''} class={inputCls} />
+  </div>
+
+  <div>
+    <label class="text-sm font-medium text-neutral-900" for="cf-description">Description</label>
+    <textarea id="cf-description" data-field="description" rows="4" required class={inputCls}>{company.description ?? ''}</textarea>
+  </div>
+
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div>
+      <label class="text-sm font-medium text-neutral-900" for="cf-website">Website URL</label>
+      <input id="cf-website" data-field="website_url" type="url" value={company.website_url ?? ''} class={inputCls} placeholder="https://" />
+    </div>
+    <div>
+      <label class="text-sm font-medium text-neutral-900" for="cf-phone">Phone</label>
+      <input id="cf-phone" data-field="phone" type="text" value={company.phone ?? ''} class={inputCls} />
+    </div>
+    <div>
+      <label class="text-sm font-medium text-neutral-900" for="cf-email">Email</label>
+      <input id="cf-email" data-field="email" type="email" value={company.email ?? ''} class={inputCls} />
+    </div>
+    <div>
+      <label class="text-sm font-medium text-neutral-900" for="cf-logo">Logo URL</label>
+      <input id="cf-logo" data-field="logo_url" type="url" value={company.logo_url ?? ''} class={inputCls} placeholder="https://" />
+    </div>
+  </div>
+
+  <fieldset>
+    <legend class="text-sm font-medium text-neutral-900">Address</legend>
+    <div class="mt-1.5 grid gap-3 sm:grid-cols-2">
+      <input data-addr="street" type="text" value={addr.street ?? ''} class={inputCls} placeholder="Street" />
+      <input data-addr="city" type="text" value={addr.city ?? ''} class={inputCls} placeholder="City" />
+      <input data-addr="province" type="text" value={addr.province ?? ''} class={inputCls} placeholder="Province (e.g. ON)" />
+      <input data-addr="postal" type="text" value={addr.postal ?? ''} class={inputCls} placeholder="Postal (A1A 1A1)" />
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend class="text-sm font-medium text-neutral-900">Services</legend>
+    <div class="mt-2 grid gap-2 sm:grid-cols-2">
+      {serviceCategories.map((s) => (
+        <label class="flex items-center gap-2 text-sm text-neutral-800">
+          <input data-service type="checkbox" value={s} checked={selected.has(s)} class="rounded border-neutral-300 text-emerald-600 focus:ring-emerald-600" />
+          {s}
+        </label>
+      ))}
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <div class="flex items-center justify-between">
+      <legend class="text-sm font-medium text-neutral-900">FAQs</legend>
+      <button type="button" data-faq-add class="rounded-md border border-neutral-300 px-2.5 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50">+ Add FAQ</button>
+    </div>
+    <div data-faq-list class="mt-2 space-y-3">
+      {faqs.map((f) => (
+        <div data-faq-row class="rounded-lg border border-neutral-200 p-3">
+          <input data-faq-q type="text" value={f.question} placeholder="Question" class="w-full rounded-md px-2.5 py-1.5 text-sm ring-1 ring-black/10 focus:outline-2 focus:-outline-offset-1 focus:outline-emerald-600" />
+          <textarea data-faq-a rows="2" placeholder="Answer" class="mt-2 w-full rounded-md px-2.5 py-1.5 text-sm ring-1 ring-black/10 focus:outline-2 focus:-outline-offset-1 focus:outline-emerald-600">{f.answer}</textarea>
+          <button type="button" data-faq-remove class="mt-1 text-xs text-red-600 hover:text-red-700">Remove</button>
+        </div>
+      ))}
+    </div>
+  </fieldset>
+
+  <label class="flex items-center gap-2 text-sm font-medium text-neutral-900">
+    <input data-field="is_featured" type="checkbox" checked={company.is_featured === true} class="rounded border-neutral-300 text-emerald-600 focus:ring-emerald-600" />
+    Featured (pins to top of the directory)
+  </label>
+
+  <div class="flex items-center gap-3 border-t border-neutral-200 pt-4">
+    <button type="submit" class="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50">{submitLabel}</button>
+    <span data-cf-status class="text-xs text-neutral-500"></span>
+  </div>
+</form>
+
+<template data-faq-template>
+  <div data-faq-row class="rounded-lg border border-neutral-200 p-3">
+    <input data-faq-q type="text" placeholder="Question" class="w-full rounded-md px-2.5 py-1.5 text-sm ring-1 ring-black/10 focus:outline-2 focus:-outline-offset-1 focus:outline-emerald-600" />
+    <textarea data-faq-a rows="2" placeholder="Answer" class="mt-2 w-full rounded-md px-2.5 py-1.5 text-sm ring-1 ring-black/10 focus:outline-2 focus:-outline-offset-1 focus:outline-emerald-600"></textarea>
+    <button type="button" data-faq-remove class="mt-1 text-xs text-red-600 hover:text-red-700">Remove</button>
+  </div>
+</template>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>('[data-company-form]');
+  if (form) {
+    const action = form.getAttribute('data-action')!;
+    const mode = form.getAttribute('data-mode');
+    const statusEl = form.querySelector<HTMLElement>('[data-cf-status]');
+    const faqList = form.querySelector<HTMLElement>('[data-faq-list]');
+    const tmpl = document.querySelector<HTMLTemplateElement>('[data-faq-template]');
+    const toast = (m: string, t: 'success' | 'error' = 'success') => (window as any).showToast?.(m, t);
+
+    form.querySelector('[data-faq-add]')?.addEventListener('click', () => {
+      if (tmpl && faqList) faqList.appendChild(tmpl.content.cloneNode(true));
+    });
+    faqList?.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('[data-faq-remove]');
+      if (btn) btn.closest('[data-faq-row]')?.remove();
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const val = (sel: string) => (form.querySelector(sel) as HTMLInputElement | HTMLTextAreaElement | null)?.value?.trim() ?? '';
+      const checked = (sel: string) => (form.querySelector(sel) as HTMLInputElement | null)?.checked ?? false;
+
+      const payload: Record<string, unknown> = {
+        name: val('[data-field="name"]'),
+        description: val('[data-field="description"]'),
+        website_url: val('[data-field="website_url"]'),
+        phone: val('[data-field="phone"]'),
+        email: val('[data-field="email"]'),
+        logo_url: val('[data-field="logo_url"]'),
+        is_featured: checked('[data-field="is_featured"]'),
+        address: {
+          street: val('[data-addr="street"]'),
+          city: val('[data-addr="city"]'),
+          province: val('[data-addr="province"]'),
+          postal: val('[data-addr="postal"]'),
+        },
+        services: Array.from(form.querySelectorAll<HTMLInputElement>('[data-service]:checked')).map((c) => c.value),
+        faq: Array.from(form.querySelectorAll<HTMLElement>('[data-faq-row]'))
+          .map((row) => ({
+            question: (row.querySelector('[data-faq-q]') as HTMLInputElement)?.value.trim() ?? '',
+            answer: (row.querySelector('[data-faq-a]') as HTMLTextAreaElement)?.value.trim() ?? '',
+          }))
+          .filter((f) => f.question && f.answer),
+      };
+
+      if (!payload.name) { toast('Company name is required', 'error'); return; }
+      if (!payload.description) { toast('Description is required', 'error'); return; }
+
+      const btn = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+      if (btn) btn.disabled = true;
+      if (statusEl) statusEl.textContent = 'Saving…';
+      try {
+        const res = await fetch(action, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          toast(data?.error || 'Save failed', 'error');
+          if (statusEl) statusEl.textContent = '';
+        } else if (mode === 'create' && data.slug) {
+          toast('Company created. Deploy queued.');
+          setTimeout(() => (window.location.href = `/admin/companies/${data.slug}`), 900);
+        } else {
+          toast('Saved. Deploy queued.');
+          if (statusEl) statusEl.textContent = 'Saved';
+        }
+      } catch {
+        toast('Network error', 'error');
+        if (statusEl) statusEl.textContent = '';
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    });
+  }
+</script>

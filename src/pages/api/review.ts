@@ -75,6 +75,7 @@ export const POST: APIRoute = async ({ request, redirect }) => {
     .from('companies')
     .select('id')
     .eq('id', company_id)
+    .is('deleted_at', null)
     .maybeSingle();
   if (companyErr || !company) {
     return fail(request, 'That company is no longer available for reviews.', 400);
