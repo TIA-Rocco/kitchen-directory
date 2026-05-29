@@ -18,7 +18,10 @@ if (errorDescription) {
   if (error) {
     redirectTo = '/admin/login?error=' + encodeURIComponent(error.message);
   } else {
-    redirectTo = next.startsWith('/') ? next : '/admin';
+    // Only allow same-origin relative paths. Reject protocol-relative ("//evil")
+    // and backslash tricks that browsers normalize to "//" (open-redirect guard).
+    const safeNext = next.startsWith('/') && !next.startsWith('//') && !next.startsWith('/\\');
+    redirectTo = safeNext ? next : '/admin';
   }
 } else {
   redirectTo = '/admin/login?error=missing_code';
