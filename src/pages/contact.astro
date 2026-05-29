@@ -28,7 +28,7 @@ import Footer from '../components/Footer.astro';
       <h1 class="mt-6 text-3xl font-semibold tracking-tight">Contact Us</h1>
       <p class="mt-2 text-neutral-500">Have a question or want to update your company profile? We'd love to hear from you.</p>
 
-      <form action="/api/contact" method="POST" class="mt-10 space-y-6">
+      <form id="contact-form" action="/api/contact" method="POST" class="mt-10 space-y-6">
         <!-- Honeypot -->
         <div class="hidden" aria-hidden="true">
           <label for="fax">Fax</label>
@@ -74,6 +74,8 @@ import Footer from '../components/Footer.astro';
           <textarea id="message" name="message" required rows="5" class="mt-1.5 w-full rounded-lg px-3 py-2.5 text-sm ring-1 ring-black/10 focus:outline-2 focus:-outline-offset-1 focus:outline-emerald-600 max-sm:text-base/6" placeholder="How can we help?"></textarea>
         </div>
 
+        <div id="contact-error" role="alert" class="hidden rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-200"></div>
+
         <button type="submit" class="w-full rounded-md bg-emerald-600 px-3 py-2.5 text-sm font-medium text-white hover:bg-emerald-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600">
           Send Message
         </button>
@@ -100,6 +102,64 @@ import Footer from '../components/Footer.astro';
       })();
     </script>
   </main>
+
+  <script>
+    const form = document.getElementById('contact-form') as HTMLFormElement | null;
+    const errorBox = document.getElementById('contact-error');
+    const reason = document.getElementById('reason') as HTMLSelectElement | null;
+
+    if (form) {
+      const btn = form.querySelector('button[type="submit"]') as HTMLButtonElement | null;
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errorBox?.classList.add('hidden');
+
+        // "List My Company" isn't a contact submission — send them to the form.
+        if (reason?.value === 'submit_company') {
+          if (errorBox) {
+            errorBox.replaceChildren(
+              document.createTextNode('To be listed in the directory, please use our '),
+            );
+            const link = document.createElement('a');
+            link.href = '/list-your-company';
+            link.className = 'font-semibold underline';
+            link.textContent = 'dedicated application form';
+            errorBox.append(link, document.createTextNode('.'));
+            errorBox.classList.remove('hidden');
+          }
+          return;
+        }
+
+        const original = btn?.textContent ?? 'Send Message';
+        if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+        try {
+          const res = await fetch(form.action, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'fetch' },
+            body: new FormData(form),
+          });
+          if (res.ok) {
+            window.location.href = '/thank-you';
+            return;
+          }
+          let msg = 'Something went wrong. Please try again.';
+          try { const data = await res.json(); if (data?.error) msg = data.error; } catch {}
+          if (errorBox) {
+            errorBox.textContent = msg;
+            errorBox.classList.remove('hidden');
+            errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        } catch {
+          if (errorBox) {
+            errorBox.textContent = 'Network error. Please check your connection and try again.';
+            errorBox.classList.remove('hidden');
+          }
+        } finally {
+          if (btn) { btn.disabled = false; btn.textContent = original; }
+        }
+      });
+    }
+  </script>
 
   <Footer />
 </Base>

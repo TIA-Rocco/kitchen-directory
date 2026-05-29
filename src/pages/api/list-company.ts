@@ -182,10 +182,10 @@ export const POST: APIRoute = async ({ request, redirect, url }) => {
       return jsonError('Logo file is too large. Max 1MB.', 400);
     }
     if (!ALLOWED_LOGO_TYPES.has(logo.type)) {
-      return jsonError('Logo must be a PNG, JPG, or SVG.', 400);
+      return jsonError('Logo must be a PNG or JPG.', 400);
     }
     try {
-      const ext = logo.type === 'image/svg+xml' ? 'svg' : logo.type === 'image/jpeg' ? 'jpg' : 'png';
+      const ext = logo.type === 'image/jpeg' ? 'jpg' : 'png';
       const safeSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'company';
       const path = `${safeSlug}-${crypto.randomUUID()}.${ext}`;
       const bytes = new Uint8Array(await logo.arrayBuffer());

@@ -11,9 +11,9 @@ const services = (serviceCategories || []).map((s) => s.name);
 
 const { data: companiesData } = await supabase
   .from('companies')
-  .select('id, name')
+  .select('id, name, slug')
   .order('ranking_score', { ascending: false });
-const sampleCompanies = (companiesData || []).map((c) => ({ slug: c.id, name: c.name }));
+const companyOptions = (companiesData || []).map((c) => ({ id: c.id, slug: c.slug, name: c.name }));
 ---
 
 <Base
@@ -41,7 +41,7 @@ const sampleCompanies = (companiesData || []).map((c) => ({ slug: c.id, name: c.
       <h1 class="mt-6 text-3xl font-semibold tracking-tight">Submit a Review</h1>
       <p class="mt-2 text-neutral-500">Share your experience with a commercial kitchen equipment supplier. Your review helps others make informed decisions.</p>
 
-      <form action="/api/review" method="POST" class="mt-10 space-y-6">
+      <form id="review-form" action="/api/review" method="POST" class="mt-10 space-y-6">
         <!-- Honeypot -->
         <div class="hidden" aria-hidden="true">
           <label for="website">Website</label>
@@ -53,8 +53,8 @@ const sampleCompanies = (companiesData || []).map((c) => ({ slug: c.id, name: c.
           <div class="mt-1.5 inline-grid w-full grid-cols-[1fr_--spacing(8)]">
             <select id="company" name="company_id" required class="col-span-full row-start-1 w-full appearance-none rounded-lg py-2.5 pr-8 pl-3 text-sm ring-1 ring-black/10 focus:outline-2 focus:-outline-offset-1 focus:outline-emerald-600">
               <option value="">Select a company</option>
-              {sampleCompanies.map((c) => (
-                <option value={c.slug}>{c.name}</option>
+              {companyOptions.map((c) => (
+                <option value={c.id} data-slug={c.slug}>{c.name}</option>
               ))}
             </select>
             <svg viewBox="0 0 8 5" width="8" height="5" fill="none" class="pointer-events-none col-start-2 row-start-1 place-self-center">
@@ -108,6 +108,8 @@ const sampleCompanies = (companiesData || []).map((c) => ({ slug: c.id, name: c.
           <textarea id="review_text" name="review_text" required rows="5" class="mt-1.5 w-full rounded-lg px-3 py-2.5 text-sm ring-1 ring-black/10 focus:outline-2 focus:-outline-offset-1 focus:outline-emerald-600 max-sm:text-base/6" placeholder="Describe your experience working with this company..."></textarea>
         </div>
 
+        <div id="review-error" role="alert" class="hidden rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-200"></div>
+
         <button type="submit" class="w-full rounded-md bg-emerald-600 px-3 py-2.5 text-sm font-medium text-white hover:bg-emerald-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600">
           Submit Review
         </button>
@@ -118,4 +120,55 @@ const sampleCompanies = (companiesData || []).map((c) => ({ slug: c.id, name: c.
   </main>
 
   <Footer />
+
+  <script>
+    const form = document.getElementById('review-form') as HTMLFormElement | null;
+    const errorBox = document.getElementById('review-error');
+    const select = document.getElementById('company') as HTMLSelectElement | null;
+
+    // Preselect a company from ?company= (matches the option id or its slug),
+    // so "Be the first to review" links from company rows land preselected.
+    const wanted = new URLSearchParams(window.location.search).get('company');
+    if (wanted && select) {
+      const opt = Array.from(select.options).find(
+        (o) => o.value === wanted || o.dataset.slug === wanted
+      );
+      if (opt) select.value = opt.value;
+    }
+
+    if (form) {
+      const btn = form.querySelector('button[type="submit"]') as HTMLButtonElement | null;
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errorBox?.classList.add('hidden');
+        const original = btn?.textContent ?? 'Submit Review';
+        if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
+        try {
+          const res = await fetch(form.action, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'fetch' },
+            body: new FormData(form),
+          });
+          if (res.ok) {
+            window.location.href = '/thank-you';
+            return;
+          }
+          let msg = 'Something went wrong. Please try again.';
+          try { const data = await res.json(); if (data?.error) msg = data.error; } catch {}
+          if (errorBox) {
+            errorBox.textContent = msg;
+            errorBox.classList.remove('hidden');
+            errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        } catch {
+          if (errorBox) {
+            errorBox.textContent = 'Network error. Please check your connection and try again.';
+            errorBox.classList.remove('hidden');
+          }
+        } finally {
+          if (btn) { btn.disabled = false; btn.textContent = original; }
+        }
+      });
+    }
+  </script>
 </Base>
