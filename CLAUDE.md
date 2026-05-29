@@ -192,9 +192,10 @@ After pulling: apply `supabase/migrations/003_partners.sql` and `004_blog.sql` t
 ### Verification
 - Full `astro build` renders `/` + 9 services + 9 blog posts + 7 companies + sitemap.
 - Codex final review: no P1; P2s fixed (RLS Data-API leak, open-redirect guard in admin callback, dup-company index).
+- **Shipped + canary-verified live** on kitchen-directory.vercel.app (landing, blog with images, per-category FAQ pages, company admin, both bug fixes). Migrations 007-011 applied to prod.
 
 ### Known / follow-ups
-- **Blog featured images** not yet generated (posts ship with the KE placeholder); generate via the imagegen skill + set `featured_image_url`.
+- **Blog featured images** done: real Unsplash photos (Unsplash License, free to use) downloaded + self-hosted at `/public/blog/<slug>.jpg` (1600x900), assigned via `supabase/seed/blog_featured_images.sql`. All 9 posts have live images. Swap for client/brand photography later by replacing the files or updating `featured_image_url`.
 - **Mailgun edge-function secret** still unset (email delivery) — non-blocking now that submissions auto-verify; set it via the TIA team Vercel/Supabase scope to enable notification emails. Reject/needs-info applicant emails are still mailto (server-side templates pending edge config).
 - **P3 (accepted):** approval fires two deploy hooks (company insert + status update) — harmless extra rebuild.
 - 17 stale branches are all merged-by-patch (`git cherry`) and safe to delete; duplicate 005/006 migration numbers are latent (left as-is, forward-only 007-011 added).
