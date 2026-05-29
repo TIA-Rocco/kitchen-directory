@@ -1,14 +1,19 @@
 ---
 import Base from '../../layouts/Base.astro';
+import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
-import { buildItemListSchema } from '../../lib/schema';
+import { buildItemListSchema, buildFAQPageSchema } from '../../lib/schema';
+import type { FaqItem } from '../../lib/types';
 import { supabase } from '../../lib/supabase';
 
 export async function getStaticPaths() {
-  const { data: services } = await supabase.from('service_categories').select('*');
+  const { data: services } = await supabase
+    .from('service_categories')
+    .select('name, slug, description, faq');
   const { data: allCompanies } = await supabase
     .from('companies')
     .select('*')
+    .is('deleted_at', null)
     .order('ranking_score', { ascending: false });
 
   return (services || []).map((service) => {
@@ -19,6 +24,8 @@ export async function getStaticPaths() {
       params: { slug: service.slug },
       props: {
         serviceName: service.name,
+        description: service.description as string,
+        faq: (service.faq || []) as FaqItem[],
         companies: filtered.map((c) => ({
           ...c,
           city: c.address?.city || '',
@@ -31,8 +38,10 @@ export async function getStaticPaths() {
 }
 
 const { slug } = Astro.params;
-const { serviceName, companies } = Astro.props;
+const { serviceName, description, faq, companies } = Astro.props;
 
+// ItemList here is CATEGORY-SPECIFIC: only the companies filtered for this
+// service, scoped to the category URL. (The global homepage ItemList lives on /.)
 const itemListSchema = buildItemListSchema(
   companies,
   `Best ${serviceName} Suppliers in Canada`,
@@ -55,8 +64,6 @@ const serviceSchema = {
   })),
 };
 
-const jsonLd: Record<string, unknown>[] = [itemListSchema, serviceSchema];
-
 const breadcrumbSchema = {
   '@context': 'https://schema.org',
   '@type': 'BreadcrumbList',
@@ -67,7 +74,16 @@ const breadcrumbSchema = {
   ],
 };
 
-jsonLd.push(breadcrumbSchema);
+// Per-category FAQPage JSON-LD, reusing the shared builder. Emitted only when
+// the category has FAQ content, in addition to ItemList + Service + Breadcrumb.
+const faqPageSchema = buildFAQPageSchema(faq);
+
+const jsonLd: Record<string, unknown>[] = [
+  itemListSchema,
+  serviceSchema,
+  breadcrumbSchema,
+  ...(faqPageSchema ? [faqPageSchema] : []),
+];
 ---
 
 <Base
@@ -75,20 +91,7 @@ jsonLd.push(breadcrumbSchema);
   description={`Compare top-rated ${serviceName.toLowerCase()} suppliers for commercial kitchens in Canada. Independent rankings and verified reviews.`}
   jsonLd={jsonLd}
 >
-  <header class="border-b border-neutral-950/5 bg-white">
-    <nav class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-      <a href="/" aria-label="Homepage" class="flex items-center gap-2">
-        <img src="https://assets.ui.sh/marks/1.svg?color=emerald-600&text=KE&textColor=neutral-900&font=inter" alt="Kitchen Equipment Canada" class="h-8" />
-        <span class="text-lg font-semibold tracking-tight">KitchenEquipment.ca</span>
-      </a>
-      <div class="flex items-center gap-6">
-        <a href="/blog" class="max-sm:hidden text-sm font-medium text-neutral-600 hover:text-neutral-900">Blog</a>
-        <a href="/submit-review" class="max-sm:hidden text-sm font-medium text-neutral-600 hover:text-neutral-900">Submit a Review</a>
-        <a href="/list-your-company" class="max-sm:hidden text-sm font-medium text-neutral-600 hover:text-neutral-900">List your company</a>
-        <a href="/contact" class="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600">Contact Us</a>
-      </div>
-    </nav>
-  </header>
+  <Header />
 
   <main>
     <section class="bg-neutral-950 py-20">
@@ -105,7 +108,15 @@ jsonLd.push(breadcrumbSchema);
       </div>
     </section>
 
-    <section class="py-20">
+    {description && (
+      <section class="border-b border-neutral-950/5 py-10">
+        <div class="mx-auto max-w-7xl px-6">
+          <p class="max-w-[72ch] text-pretty text-neutral-600">{description}</p>
+        </div>
+      </section>
+    )}
+
+    <section class="py-16">
       <div class="mx-auto max-w-7xl px-6">
         {companies.length > 0 ? (
           <div class="overflow-hidden rounded-xl ring-1 ring-black/5">
@@ -202,7 +213,61 @@ jsonLd.push(breadcrumbSchema);
         )}
       </div>
     </section>
+
+    {faq.length > 0 && (
+      <section class="border-t border-neutral-950/5 py-16">
+        <div class="mx-auto max-w-3xl px-6">
+          <h2 class="text-2xl font-semibold tracking-tight text-neutral-900">Frequently asked questions</h2>
+          <div class="mt-8 divide-y divide-neutral-950/5">
+            {faq.map((item: FaqItem) => (
+              <details class="faq-item group py-2">
+                <summary class="flex cursor-pointer list-none items-center justify-between gap-4 py-3 text-base font-medium text-neutral-900 marker:hidden [&::-webkit-details-marker]:hidden">
+                  <span>{item.question}</span>
+                  <svg class="faq-chevron size-5 shrink-0 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </summary>
+                <div class="faq-panel">
+                  <div class="overflow-hidden">
+                    <p class="pb-4 text-sm text-pretty text-neutral-600">{item.answer}</p>
+                  </div>
+                </div>
+              </details>
+            ))}
+          </div>
+          <p class="mt-8 text-sm text-neutral-500">
+            Still have questions?
+            <a href="/contact" class="font-medium text-emerald-600 hover:text-emerald-500">Contact us</a>.
+          </p>
+        </div>
+      </section>
+    )}
   </main>
 
   <Footer />
 </Base>
+
+<style>
+  /* Accordion: animate via grid-template-rows (0fr -> 1fr), never height.
+     Eased open/close per animation rules; collapses gracefully without JS. */
+  .faq-panel {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .faq-item[open] .faq-panel {
+    grid-template-rows: 1fr;
+  }
+  .faq-chevron {
+    transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .faq-item[open] .faq-chevron {
+    transform: rotate(180deg);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .faq-panel,
+    .faq-chevron {
+      transition: none;
+    }
+  }
+</style>

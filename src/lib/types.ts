@@ -60,6 +60,7 @@ export interface ServiceCategory {
   name: string;
   slug: string;
   description: string;
+  faq: FaqItem[];
 }
 
 export interface ContactSubmission {
