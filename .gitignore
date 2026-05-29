@@ -30,3 +30,6 @@ supabase/.branches/
 
 # playwright MCP runtime cache
 .playwright-mcp/
+
+# content seed intermediates
+supabase/seed/_chunks/
