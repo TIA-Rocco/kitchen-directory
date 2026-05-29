@@ -183,7 +183,7 @@ const isClosed = sub.status === 'approved' || sub.status === 'rejected';
             disabled={isClosed}
             class="w-full rounded-md bg-emerald-600 px-3 py-2.5 text-sm font-medium text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Approve
+            {sub.status === 'unverified' ? 'Verify & approve' : 'Approve'}
           </button>
           <button
             type="button"
@@ -201,10 +201,19 @@ const isClosed = sub.status === 'approved' || sub.status === 'rejected';
           >
             Reject
           </button>
+          {sub.status === 'rejected' && (
+            <button
+              type="button"
+              data-action="reopen"
+              class="w-full rounded-md border border-neutral-300 bg-white px-3 py-2.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+            >
+              Reopen to pending
+            </button>
+          )}
         </div>
-        {isClosed && (
+        {sub.status === 'approved' && (
           <p class="mt-3 text-xs text-neutral-500">
-            This submission is closed ({sub.status}). Re-open via Supabase if needed.
+            Approved and live. Manage this company from the Companies tab.
           </p>
         )}
       </section>
@@ -256,15 +265,25 @@ const isClosed = sub.status === 'approved' || sub.status === 'rejected';
       actions.querySelectorAll<HTMLButtonElement>('button[data-action]').forEach((btn) => {
         btn.addEventListener('click', async () => {
           const action = btn.getAttribute('data-action')!;
-          if (action === 'reject' && !confirm('Reject this submission?')) return;
-          if (action === 'needs-info' && !confirm('Mark as needs-info and email the submitter?')) return;
+
+          // Capture a reason for reject / needs-info — saved to internal notes
+          // (audit trail) and prefilled into the email draft.
+          let reason = '';
+          if (action === 'reject') {
+            if (!confirm('Reject this submission?')) return;
+            reason = prompt('Reason for rejection (saved to internal notes, optional):')?.trim() ?? '';
+          } else if (action === 'needs-info') {
+            reason = prompt('What information is needed? (saved to internal notes, and prefilled into the email):')?.trim() ?? '';
+          } else if (action === 'reopen') {
+            if (!confirm('Reopen this submission to pending?')) return;
+          }
 
           btn.disabled = true;
           try {
             const res = await fetch(`/api/admin/submissions/${id}/${action}`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({}),
+              body: JSON.stringify(reason ? { notes: reason } : {}),
             });
             const data = await res.json().catch(() => ({}));
             if (!res.ok) {
@@ -276,20 +295,24 @@ const isClosed = sub.status === 'approved' || sub.status === 'rejected';
             if (action === 'approve') {
               disable();
               const slug = data.company_slug;
-              toast(slug ? `Approved. Live at /companies/${slug}` : 'Approved.');
-              setTimeout(() => (window.location.href = '/admin/submissions'), 1200);
+              toast(slug ? `Approved. Live at /companies/${slug} after the next rebuild.` : 'Approved.');
+              setTimeout(() => (window.location.href = '/admin/submissions'), 1400);
+            } else if (action === 'reopen') {
+              toast('Reopened to pending.');
+              setTimeout(() => window.location.reload(), 800);
             } else {
               disable();
               const subject = action === 'reject'
                 ? 'Your application to Kitchen Equipment Canada'
                 : 'We need a bit more info on your application';
-              const body = action === 'reject'
-                ? 'Hi,\n\nThanks for applying. Unfortunately we are unable to list your company at this time.\n\n— Kitchen Equipment Canada'
-                : 'Hi,\n\nThanks for your submission. Before we can list your company we need a bit more information:\n\n[details]\n\nReply to this email and we will continue the review.\n\n— Kitchen Equipment Canada';
+              const intro = action === 'reject'
+                ? 'Hi,\n\nThanks for applying. Unfortunately we are unable to list your company at this time.'
+                : 'Hi,\n\nThanks for your submission. Before we can list your company we need a bit more information:';
+              const body = `${intro}${reason ? `\n\n${reason}` : ''}\n\n— Kitchen Equipment Canada`;
               const mailto = `mailto:${businessEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
               window.open(mailto, '_blank');
-              toast(action === 'reject' ? 'Rejected. Compose email opened.' : 'Marked needs-info. Compose email opened.');
-              setTimeout(() => (window.location.href = '/admin/submissions'), 1500);
+              toast(action === 'reject' ? 'Rejected. Email draft opened.' : 'Marked needs-info. Email draft opened.');
+              setTimeout(() => (window.location.href = '/admin/submissions'), 1600);
             }
           } catch (err) {
             console.error(err);

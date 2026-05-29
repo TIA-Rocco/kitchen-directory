@@ -4,10 +4,24 @@ export const prerender = false;
 import Admin from '../../../layouts/Admin.astro';
 import { supabaseAdmin } from '../../../lib/supabase-server';
 
+// Filter tabs. "open" = everything actionable (incl. unverified, which the old
+// query hid — that was the "shows in activity but not in the list" symptom).
+const FILTERS: Record<string, string[]> = {
+  open: ['unverified', 'pending', 'needs_info'],
+  pending: ['pending'],
+  needs_info: ['needs_info'],
+  unverified: ['unverified'],
+  approved: ['approved'],
+  rejected: ['rejected'],
+  all: ['unverified', 'pending', 'needs_info', 'approved', 'rejected'],
+};
+const requested = Astro.url.searchParams.get('status') ?? 'open';
+const activeFilter = FILTERS[requested] ? requested : 'open';
+
 const { data: submissions } = await supabaseAdmin
   .from('supplier_submissions')
   .select('id, name, address, services, submitted_by_name, submitted_by_email, status, created_at')
-  .in('status', ['pending', 'needs_info'])
+  .in('status', FILTERS[activeFilter])
   .order('created_at', { ascending: false });
 
 function fmt(ts: string) {
@@ -20,21 +34,49 @@ function city(addr: any): string {
 }
 
 const statusStyles: Record<string, string> = {
+  unverified: 'bg-neutral-100 text-neutral-700 ring-neutral-200',
   pending: 'bg-amber-50 text-amber-800 ring-amber-200',
   needs_info: 'bg-sky-50 text-sky-800 ring-sky-200',
+  approved: 'bg-emerald-50 text-emerald-800 ring-emerald-200',
+  rejected: 'bg-red-50 text-red-700 ring-red-200',
 };
+
+const TABS: { key: string; label: string }[] = [
+  { key: 'open', label: 'Open' },
+  { key: 'pending', label: 'Pending' },
+  { key: 'needs_info', label: 'Needs info' },
+  { key: 'unverified', label: 'Unverified' },
+  { key: 'approved', label: 'Approved' },
+  { key: 'rejected', label: 'Rejected' },
+  { key: 'all', label: 'All' },
+];
 ---
 
 <Admin title="Submissions" activeNav="submissions">
   <div class="rounded-xl bg-white ring-1 ring-black/5">
+    <div class="flex flex-wrap items-center gap-1 border-b border-neutral-200 px-3 py-2">
+      {TABS.map((t) => (
+        <a
+          href={`/admin/submissions?status=${t.key}`}
+          class:list={[
+            'rounded-md px-3 py-1.5 text-xs font-medium',
+            t.key === activeFilter
+              ? 'bg-neutral-900 text-white'
+              : 'text-neutral-600 hover:bg-neutral-100',
+          ]}
+        >
+          {t.label}
+        </a>
+      ))}
+    </div>
     <div class="border-b border-neutral-200 px-5 py-3">
       <h2 class="text-sm font-semibold text-neutral-900">
-        Pending review ({submissions?.length ?? 0})
+        {TABS.find((t) => t.key === activeFilter)?.label} ({submissions?.length ?? 0})
       </h2>
     </div>
     {!submissions || submissions.length === 0 ? (
       <div class="px-5 py-12 text-center text-sm text-neutral-500">
-        No submissions awaiting review. Nice.
+        Nothing here.
       </div>
     ) : (
       <div class="overflow-x-auto">

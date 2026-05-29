@@ -10,27 +10,20 @@ export const POST: APIRoute = async ({ params, locals }) => {
     return json({ error: 'unauthorized' }, 401);
   }
 
-  // Promote to companies (DB function handles slug + insert)
-  const { data: companyId, error: rpcErr } = await supabaseAdmin.rpc('promote_submission', {
-    submission_id: id,
+  // Single atomic + idempotent DB function: creates the company (only if not
+  // already promoted), flips status to approved, and writes audit cols in one
+  // transaction. Re-approving a row returns the existing company (no dup).
+  // Accepts unverified/pending/needs_info.
+  const { data: companyId, error } = await supabaseAdmin.rpc('approve_submission', {
+    p_submission_id: id,
+    p_admin_id: user.id,
   });
-  if (rpcErr) {
-    console.error('promote_submission failed:', rpcErr);
-    return json({ error: rpcErr.message }, 500);
-  }
 
-  // Audit + close submission
-  const { error: updErr } = await supabaseAdmin
-    .from('supplier_submissions')
-    .update({
-      status: 'approved',
-      approved_by: user.id,
-      approved_at: new Date().toISOString(),
-    })
-    .eq('id', id);
-  if (updErr) {
-    console.error('submission update failed:', updErr);
-    return json({ error: updErr.message }, 500);
+  if (error) {
+    console.error('approve_submission failed:', error);
+    const msg = error.message || 'Approval failed.';
+    const status = /rejected/i.test(msg) ? 409 : /not found/i.test(msg) ? 404 : 500;
+    return json({ error: friendlyMessage(msg) }, status);
   }
 
   const { data: company } = await supabaseAdmin
@@ -41,6 +34,12 @@ export const POST: APIRoute = async ({ params, locals }) => {
 
   return json({ ok: true, company_id: companyId, company_slug: company?.slug ?? null });
 };
+
+function friendlyMessage(raw: string): string {
+  if (/rejected/i.test(raw)) return 'This submission was rejected. Reopen it before approving.';
+  if (/not found/i.test(raw)) return 'Submission not found (it may have been removed).';
+  return 'Could not approve this submission. Please try again.';
+}
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {

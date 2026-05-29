@@ -17,6 +17,15 @@ const ALLOWED_LOGO_TYPES = new Set(['image/png', 'image/jpeg']);
 const RATE_LIMIT_PER_IP_PER_24H = 3;
 const STORAGE_BUCKET = 'supplier-logos';
 
+// Auto-verify removes the email gate, so guard the queue with extra spam checks.
+const DISPOSABLE_EMAIL_DOMAINS = new Set([
+  'mailinator.com', 'guerrillamail.com', '10minutemail.com', 'tempmail.com', 'temp-mail.org',
+  'throwawaymail.com', 'yopmail.com', 'getnada.com', 'trashmail.com', 'sharklasers.com',
+  'maildrop.cc', 'dispostable.com', 'fakeinbox.com', 'mailnesia.com', 'mintemail.com',
+  'tempr.email', 'moakt.com', 'emailondeck.com',
+]);
+const emailDomain = (e: string) => e.split('@')[1]?.toLowerCase() ?? '';
+
 function jsonError(message: string, status: number) {
   return new Response(JSON.stringify({ error: message }), {
     status,
@@ -67,7 +76,7 @@ async function verifyTurnstile(token: string, ip: string | null): Promise<{ ok: 
   }
 }
 
-export const POST: APIRoute = async ({ request, redirect, url }) => {
+export const POST: APIRoute = async ({ request, redirect }) => {
   let formData: FormData;
   try {
     formData = await request.formData();
@@ -151,6 +160,9 @@ export const POST: APIRoute = async ({ request, redirect, url }) => {
   if (isFreeEmailProvider(business_email)) {
     return jsonError('Please use a business email address (not Gmail, Yahoo, Hotmail, etc).', 400);
   }
+  if (DISPOSABLE_EMAIL_DOMAINS.has(emailDomain(business_email)) || DISPOSABLE_EMAIL_DOMAINS.has(emailDomain(submitted_by_email))) {
+    return jsonError('Please use a permanent business email address.', 400);
+  }
 
   // 5. FAQs (only first required)
   const faqPairs: FaqPair[] = [];
@@ -173,6 +185,24 @@ export const POST: APIRoute = async ({ request, redirect, url }) => {
   const certifications = certifications_raw
     ? certifications_raw.split(',').map((s) => s.trim()).filter(Boolean)
     : [];
+
+  // 7b. Duplicate detection — auto-verify means a human approves every entry,
+  // so guard the queue against re-submissions / already-listed companies.
+  // business email is the strongest signal; also block an exact name match.
+  // (.eq / escaped .ilike only — no raw user input in PostgREST .or() filters.)
+  const likeName = name.replace(/[\\%_]/g, '\\$&');
+  const [dupSubEmail, dupSubName, dupCoEmail, dupCoName] = await Promise.all([
+    supabaseAdmin.from('supplier_submissions').select('id').neq('status', 'rejected').eq('business_email', business_email).limit(1),
+    supabaseAdmin.from('supplier_submissions').select('id').neq('status', 'rejected').ilike('name', likeName).limit(1),
+    supabaseAdmin.from('companies').select('id').eq('email', business_email).limit(1),
+    supabaseAdmin.from('companies').select('id').ilike('name', likeName).limit(1),
+  ]);
+  if ((dupCoEmail.data?.length ?? 0) > 0 || (dupCoName.data?.length ?? 0) > 0) {
+    return jsonError('This company appears to already be listed in our directory. Please contact us to update an existing listing.', 409);
+  }
+  if ((dupSubEmail.data?.length ?? 0) > 0 || (dupSubName.data?.length ?? 0) > 0) {
+    return jsonError('We already have a submission for this company or email under review — no need to submit again. We will be in touch.', 409);
+  }
 
   // 8. Logo upload (best-effort, never blocks submission)
   let logo_url: string | null = null;
@@ -207,8 +237,8 @@ export const POST: APIRoute = async ({ request, redirect, url }) => {
     }
   }
 
-  // 9. Build payload + insert
-  const verification_token = crypto.randomUUID();
+  // 9. Build payload + insert. Auto-verified: lands as 'pending' so it shows in
+  // the admin queue immediately (a human approves every company anyway).
   const address = { street, city, province, postal };
 
   const { data: inserted, error: insertErr } = await supabaseAdmin
@@ -228,8 +258,8 @@ export const POST: APIRoute = async ({ request, redirect, url }) => {
       submitted_by_name,
       submitted_by_email,
       submitter_ip: ip,
-      verification_token,
-      status: 'unverified',
+      verified_at: new Date().toISOString(),
+      status: 'pending',
     })
     .select('id')
     .single();
@@ -239,36 +269,9 @@ export const POST: APIRoute = async ({ request, redirect, url }) => {
     return jsonError('Failed to submit application. Please try again.', 500);
   }
 
-  // 10. Fire verification email (best-effort)
-  try {
-    const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
-    const anonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
-    const edgeSecret = import.meta.env.EDGE_SHARED_SECRET;
-    const siteUrl = import.meta.env.PUBLIC_SITE_URL || url.origin;
-    if (supabaseUrl && anonKey) {
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${anonKey}`,
-      };
-      if (edgeSecret) headers['x-edge-secret'] = edgeSecret;
-
-      await fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          to: business_email,
-          template: 'verification',
-          vars: {
-            verify_url: `${siteUrl}/api/verify-submission?token=${verification_token}`,
-          },
-        }),
-      });
-    } else {
-      console.warn('[list-company] Supabase URL/key missing — skipping verification email.');
-    }
-  } catch (err) {
-    console.warn('[list-company] Verification email failed (continuing):', err);
-  }
+  // 10. Admin notification is handled by the DB trigger notify_submission_inserted(),
+  // which fires on INSERT of a 'pending' submission — no app-side email needed.
+  // (The old verification-link email is gone: submissions are auto-verified.)
 
   return redirect('/thank-you?type=submission', 302);
 };
