@@ -179,3 +179,22 @@ npm test         # Run Vitest unit tests (20 tests)
 
 ### Migrations to apply
 After pulling: apply `supabase/migrations/003_partners.sql` and `004_blog.sql` to the live Supabase project (via Supabase MCP, `supabase db push`, or paste into Dashboard SQL editor).
+
+## What Was Built (Session: 2026-05-29, branch feat/remaining-dev-tasks)
+"Remaining dev tasks" — fixed the two client-reported bugs, demoted the submission verification gate, built company management + a landing redesign, and published blog/category content. Migrations 007-011 were applied directly to prod via Supabase MCP.
+
+1. **Review-submit 500 — root-caused + fixed (migration 007).** The `AFTER INSERT` trigger `notify_new_review_to_admins()` was `SECURITY INVOKER`, so on a public (anon) review it read `vault.decrypted_secrets`, which `anon` can't SELECT → uncaught permission-denied → insert rolled back. Fix: all vault-reading helpers + notify trigger functions are now `SECURITY DEFINER` with pinned `search_path`, schema-qualified, wrapped in defensive handlers, and `EXECUTE` revoked from anon/authenticated/public. Verified: anon insert now succeeds on prod.
+2. **Submission pipeline (migration 008).** Demoted the email-verification gate: new submissions auto-verify to `pending` (a human approves every company, so the blocking email was a silent single point of failure). `approve_submission()` is an atomic, idempotent replacement for the old promote-then-update two-step that could create duplicate companies on retry. Admin UI: Submissions list has status-filter tabs + surfaces `unverified`; detail page approves unverified/needs_info, has a Reopen action, captures a reject/needs-info reason. `list-company.ts`: auto-verify + duplicate detection + disposable-email block. "Best Equipment Co." (Dmitry's stuck test) rescued to `pending`.
+3. **Company management (migrations 009, 011).** Full profile editor (all fields except slug — immutable), soft-delete (`deleted_at`, type-name confirm, reversible), manual "New company", via a shared `CompanyForm.astro`. Public SSG queries filter `deleted_at is null`, and the companies SELECT RLS policy is `deleted_at is null` so archived companies vanish from the Data API + build. A trigger fires the Vercel deploy hook on any company insert/update/delete. Partial unique index on `lower(name)` (active) guards the dup race.
+4. **Landing redesign (migration 010) — Option A.** `/` rebuilt (refero research: Fiverr + Wrike + Eventbrite): split dark hero, 9-category grid (emerald icon tiles), condensed Top-Rated suppliers list + dark CTA band. `WebSite`+`Organization`+`ItemList` JSON-LD preserved on `/` (AEO #1-citation signal). Shared `Header.astro` + `ServiceIcon.astro`. `/services/[slug]` gains a description + FAQ accordion + `FAQPage` JSON-LD; `service_categories.faq` jsonb added.
+5. **Content.** 8 net-new buyer-guide blog posts (9 total) + 9 category descriptions/FAQs, authored by a parallel agent swarm, grounded in real supplier data, no fabricated stats, zero em-dashes. Applied to prod (`scripts/build-content-seed.cjs` + `supabase/seed/blog_and_category_content.sql`). Darcy reviews the live articles after.
+
+### Verification
+- Full `astro build` renders `/` + 9 services + 9 blog posts + 7 companies + sitemap.
+- Codex final review: no P1; P2s fixed (RLS Data-API leak, open-redirect guard in admin callback, dup-company index).
+
+### Known / follow-ups
+- **Blog featured images** not yet generated (posts ship with the KE placeholder); generate via the imagegen skill + set `featured_image_url`.
+- **Mailgun edge-function secret** still unset (email delivery) — non-blocking now that submissions auto-verify; set it via the TIA team Vercel/Supabase scope to enable notification emails. Reject/needs-info applicant emails are still mailto (server-side templates pending edge config).
+- **P3 (accepted):** approval fires two deploy hooks (company insert + status update) — harmless extra rebuild.
+- 17 stale branches are all merged-by-patch (`git cherry`) and safe to delete; duplicate 005/006 migration numbers are latent (left as-is, forward-only 007-011 added).
