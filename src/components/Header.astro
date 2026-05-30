@@ -2,7 +2,17 @@
 // Single source-of-truth site header / primary nav.
 // Extracted verbatim from the inline <header><nav> block previously duplicated
 // across index.astro, services/[slug].astro and companies/[slug].astro.
-// Styling is intentionally unchanged so every page renders identically.
+//
+// Adds a "Services" dropdown listing every service-category page. Categories
+// are fetched at build time (SSG) so the menu stays in sync with the DB.
+import { supabase } from '../lib/supabase';
+
+const { data: navServicesRaw } = await supabase
+  .from('service_categories')
+  .select('name, slug')
+  .order('name');
+
+const navServices = navServicesRaw ?? [];
 ---
 
 <header class="border-b border-neutral-950/5 bg-white">
@@ -12,6 +22,51 @@
       <span class="max-[400px]:hidden text-lg font-semibold tracking-tight">KitchenEquipment.ca</span>
     </a>
     <div class="flex items-center gap-6">
+      <!-- Services dropdown (desktop/tablet; matches the max-sm:hidden nav links). -->
+      <div class="relative max-sm:hidden" data-services-menu>
+        <button
+          type="button"
+          class="flex items-center gap-1 text-sm font-medium text-neutral-600 hover:text-neutral-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+          aria-haspopup="true"
+          aria-expanded="false"
+          aria-controls="services-menu-panel"
+          data-services-trigger
+        >
+          Services
+          <svg class="size-4 text-neutral-400 transition-transform duration-200" data-services-chevron fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+          </svg>
+        </button>
+
+        <div
+          id="services-menu-panel"
+          data-services-panel
+          class="hidden absolute left-0 top-full z-50 mt-2 w-[30rem] max-w-[calc(100vw-2rem)] origin-top translate-y-1 rounded-2xl border border-neutral-200 bg-white p-2 opacity-0 shadow-[0_12px_40px_rgba(0,0,0,0.12)] transition duration-200 ease-out"
+          role="menu"
+          aria-label="Services"
+        >
+          <ul class="grid grid-cols-2 gap-0.5">
+            {navServices.map((s) => (
+              <li role="none">
+                <a
+                  href={`/services/${s.slug}`}
+                  role="menuitem"
+                  class="block rounded-lg px-3 py-2 text-sm text-neutral-700 transition-colors hover:bg-emerald-50 hover:text-emerald-700 focus-visible:bg-emerald-50 focus-visible:text-emerald-700 focus-visible:outline-none"
+                >
+                  {s.name}
+                </a>
+              </li>
+            ))}
+          </ul>
+          <div class="mt-1 border-t border-neutral-100 px-3 pt-2 pb-1">
+            <a href="/#categories" class="inline-flex items-center gap-1 text-sm font-medium text-emerald-600 hover:text-emerald-700">
+              Browse all services
+              <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+
       <a href="/blog" class="max-sm:hidden text-sm font-medium text-neutral-600 hover:text-neutral-900">Blog</a>
       <a href="/submit-review" class="max-sm:hidden text-sm font-medium text-neutral-600 hover:text-neutral-900">Submit a Review</a>
       <a href="/list-your-company" class="max-sm:hidden text-sm font-medium text-neutral-600 hover:text-neutral-900">List your company</a>
@@ -19,3 +74,75 @@
     </div>
   </nav>
 </header>
+
+<script>
+  function initServicesMenus() {
+    document.querySelectorAll('[data-services-menu]').forEach((menu) => {
+      if ((menu as HTMLElement).dataset.bound) return;
+      (menu as HTMLElement).dataset.bound = 'true';
+
+      const trigger = menu.querySelector('[data-services-trigger]') as HTMLElement | null;
+      const panel = menu.querySelector('[data-services-panel]') as HTMLElement | null;
+      const chevron = menu.querySelector('[data-services-chevron]');
+      if (!trigger || !panel) return;
+
+      let open = false;
+      let closeTimer: ReturnType<typeof setTimeout> | undefined;
+
+      const setOpen = (next: boolean) => {
+        if (next === open) return;
+        open = next;
+        trigger.setAttribute('aria-expanded', String(next));
+        chevron?.classList.toggle('rotate-180', next);
+
+        if (next) {
+          clearTimeout(closeTimer);
+          panel.classList.remove('hidden');
+          // Force the browser to register the hidden->shown transition start.
+          requestAnimationFrame(() => {
+            panel.classList.remove('opacity-0', 'translate-y-1');
+            panel.classList.add('opacity-100', 'translate-y-0');
+          });
+        } else {
+          panel.classList.add('opacity-0', 'translate-y-1');
+          panel.classList.remove('opacity-100', 'translate-y-0');
+          // Hide after the fade so the links leave the tab order when closed.
+          closeTimer = setTimeout(() => panel.classList.add('hidden'), 200);
+        }
+      };
+
+      trigger.addEventListener('click', (e) => {
+        e.preventDefault();
+        setOpen(!open);
+      });
+
+      // Hover-to-open on devices that actually have a hover-capable pointer.
+      if (window.matchMedia('(hover: hover)').matches) {
+        menu.addEventListener('mouseenter', () => setOpen(true));
+        menu.addEventListener('mouseleave', () => setOpen(false));
+      }
+
+      // Escape closes and returns focus to the trigger.
+      menu.addEventListener('keydown', (e) => {
+        if ((e as KeyboardEvent).key === 'Escape' && open) {
+          setOpen(false);
+          trigger.focus();
+        }
+      });
+
+      // Tabbing out of the menu closes it.
+      menu.addEventListener('focusout', (e) => {
+        const next = (e as FocusEvent).relatedTarget as Node | null;
+        if (!next || !menu.contains(next)) setOpen(false);
+      });
+
+      // Click anywhere outside closes it.
+      document.addEventListener('click', (e) => {
+        if (open && !menu.contains(e.target as Node)) setOpen(false);
+      });
+    });
+  }
+
+  initServicesMenus();
+  document.addEventListener('astro:page-load', initServicesMenus);
+</script>
