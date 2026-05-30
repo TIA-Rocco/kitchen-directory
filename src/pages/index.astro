@@ -40,10 +40,12 @@ const rankedCompanies = (companiesRaw || []).map((c) => {
 // Condensed "Top Rated Suppliers" list shown on the homepage.
 const topSuppliers = rankedCompanies.slice(0, 5);
 
-// Service categories grid (name + description + slug).
+// Service categories grid (name + condensed card_blurb + slug).
+// card_blurb is the short homepage summary; description (long-form AEO copy)
+// is the fallback for any category that has not been given a blurb yet.
 const { data: serviceCategoriesRaw } = await supabase
   .from('service_categories')
-  .select('slug, name, description')
+  .select('slug, name, description, card_blurb')
   .order('name');
 
 const serviceCategories = serviceCategoriesRaw || [];
@@ -139,7 +141,7 @@ const jsonLd = [
                 <h3 class="mt-4 text-base font-semibold text-neutral-900 group-hover:text-emerald-600">
                   {category.name}
                 </h3>
-                <p class="mt-1.5 grow text-sm text-pretty text-neutral-500">{category.description}</p>
+                <p class="mt-1.5 grow text-sm text-pretty text-neutral-500">{category.card_blurb || category.description}</p>
                 <span class="mt-4 inline-flex items-center gap-1 text-sm font-medium text-emerald-600">
                   View suppliers
                   <svg class="size-4 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
