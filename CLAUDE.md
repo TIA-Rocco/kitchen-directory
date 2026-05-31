@@ -35,6 +35,7 @@ The site looks like an independent directory (kitchenequipment.ca branding, no S
 |-------|------|-------------|
 | `/` | SSG | Homepage with ranked supplier table, service filter chips |
 | `/companies/[slug]` | SSG | Company profile with Schema.org, ranking breakdown, reviews, FAQs, contact sidebar |
+| `/services` | SSG | Services index: 9 service-category icon cards + overarching ranked table of all suppliers |
 | `/services/[slug]` | SSG | Service category page, filtered company list (9 categories) |
 | `/submit-review` | SSG | Review form with star ratings, service category selector, honeypot |
 | `/contact` | SSG | Contact form with general/update-profile toggle, honeypot |
@@ -51,6 +52,7 @@ The site looks like an independent directory (kitchenequipment.ca branding, no S
 |------|-------------|
 | Homepage | WebSite, Organization, ItemList |
 | Company Profile | LocalBusiness, AggregateRating, FAQPage, Service, Review |
+| Services Index | ItemList (services), ItemList (suppliers), BreadcrumbList |
 | Service Category | ItemList, Service, BreadcrumbList |
 
 ## Database Schema (Supabase)
@@ -199,3 +201,17 @@ After pulling: apply `supabase/migrations/003_partners.sql` and `004_blog.sql` t
 - **Mailgun edge-function secret** still unset (email delivery) — non-blocking now that submissions auto-verify; set it via the TIA team Vercel/Supabase scope to enable notification emails. Reject/needs-info applicant emails are still mailto (server-side templates pending edge config).
 - **P3 (accepted):** approval fires two deploy hooks (company insert + status update) — harmless extra rebuild.
 - 17 stale branches are all merged-by-patch (`git cherry`) and safe to delete; duplicate 005/006 migration numbers are latent (left as-is, forward-only 007-011 added).
+
+## What Was Built (Session: 2026-05-30, PR #18 feat/services-index-dropdown-icons)
+Services nav polish + a new `/services` index. No DB/migration changes.
+
+1. **Services dropdown icons.** Each row in the desktop Services dropdown now renders the homepage `ServiceIcon` in an emerald tile (emerald-50, fills emerald-600 on hover/focus); panel widened 30rem → 34rem to absorb the icon column. `Header.astro` imports `ServiceIcon`.
+2. **New `/services` index page** (`src/pages/services/index.astro`, SSG). Hero + breadcrumb, the 9 service-category icon cards (mirrors the homepage grid), and **one overarching ranked table of every active supplier** across all services — the master directory, not the homepage top-5. Reuses the homepage companies + approved-review-stats query and the `/services/[slug]` table markup. "Browse all services" in the dropdown now points here (was the `/#categories` anchor).
+3. **Schema.org.** `/services` emits services `ItemList` + suppliers `ItemList` (scoped to the `/services` URL) + `BreadcrumbList`. Homepage's primary supplier `ItemList` untouched. `/services/[slug]` breadcrumb's "Services" crumb now links to `/services` (schema already referenced it).
+
+### Verification
+- `astro build` renders `/services` + all routes; null-data fallbacks confirmed via smoke build.
+- **Live visual QA (agent-browser) on kitchen-directory.vercel.app at 1280×800 + 375×812** — dropdown icons render per-slug and match the homepage; `/services` hero/cards/suppliers table render with real data (7 suppliers, Shop at Stop #1). Preview deploys are SSO-gated, so QA ran against the public production alias post-merge.
+
+### Known / follow-ups
+- **Minor (pre-existing):** the shared suppliers table clips the `/10` score suffix slightly at ~375px — same on `/services/[slug]`, not introduced here. Tighten the Score column for narrow mobile if desired.
