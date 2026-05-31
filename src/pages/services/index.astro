@@ -164,10 +164,10 @@ const jsonLd = [servicesItemList, suppliersItemList, breadcrumbSchema];
             <table class="w-full text-left">
               <thead>
                 <tr class="border-b border-neutral-950/5 bg-neutral-50">
-                  <th class="py-3.5 pr-3 pl-6 text-xs font-medium text-neutral-500">Rank</th>
-                  <th class="px-3 py-3.5 text-xs font-medium text-neutral-500">Supplier</th>
+                  <th class="py-3.5 pr-2 pl-4 text-xs font-medium text-neutral-500 sm:pr-3 sm:pl-6">Rank</th>
+                  <th class="px-2 py-3.5 text-xs font-medium text-neutral-500 sm:px-3">Supplier</th>
                   <th class="px-3 py-3.5 text-xs font-medium text-neutral-500 max-lg:hidden">Location</th>
-                  <th class="px-3 py-3.5 text-xs font-medium text-neutral-500">Score</th>
+                  <th class="px-2 py-3.5 text-xs font-medium text-neutral-500 sm:px-3">Score</th>
                   <th class="px-3 py-3.5 text-xs font-medium text-neutral-500 max-md:hidden">Reviews</th>
                   <th class="py-3.5 pr-6 pl-3 text-xs font-medium text-neutral-500 max-md:hidden">Services</th>
                 </tr>
@@ -175,7 +175,7 @@ const jsonLd = [servicesItemList, suppliersItemList, breadcrumbSchema];
               <tbody class="divide-y divide-neutral-950/5">
                 {companies.map((company: any, idx: number) => (
                   <tr class="group transition-colors hover:bg-neutral-50/80">
-                    <td class="py-6 pr-3 pl-6 align-top">
+                    <td class="py-5 pr-2 pl-4 align-top sm:py-6 sm:pr-3 sm:pl-6">
                       <span class:list={[
                         'inline-flex size-8 items-center justify-center rounded-lg text-sm font-semibold tabular-nums',
                         idx === 0 ? 'bg-emerald-600 text-white' : 'bg-neutral-100 text-neutral-600'
@@ -183,8 +183,8 @@ const jsonLd = [servicesItemList, suppliersItemList, breadcrumbSchema];
                         {idx + 1}
                       </span>
                     </td>
-                    <td class="px-3 py-6 align-top">
-                      <div class="flex items-start gap-4">
+                    <td class="px-2 py-5 align-top sm:px-3 sm:py-6">
+                      <div class="flex items-start gap-3 sm:gap-4">
                         <div class="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white ring-1 ring-black/5 text-lg font-semibold text-neutral-400">
                           {company.logo_url ? (
                             <img src={company.logo_url} alt={`${company.name} logo`} class="size-full object-contain p-1.5" loading="lazy" />
@@ -193,16 +193,16 @@ const jsonLd = [servicesItemList, suppliersItemList, breadcrumbSchema];
                           )}
                         </div>
                         <div class="min-w-0">
-                          <div class="flex items-center gap-2">
+                          <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
                             <a href={`/companies/${company.slug}`} class="text-base font-semibold text-neutral-900 group-hover:text-emerald-600">{company.name}</a>
                             {company.is_featured && (
-                              <span class="rounded-full bg-emerald-50 py-0.5 pr-2 pl-1 text-xs font-medium text-emerald-700">
+                              <span class="inline-flex shrink-0 items-center rounded-full bg-emerald-50 py-0.5 pr-2 pl-1 text-xs font-medium whitespace-nowrap text-emerald-700">
                                 <span class="mr-1 inline-flex size-4 items-center justify-center rounded-full bg-emerald-600 text-[10px] text-white">1</span>
                                 Top Rated
                               </span>
                             )}
                           </div>
-                          <p class="mt-1 max-w-[56ch] text-sm text-pretty text-neutral-500">{company.description}</p>
+                          <p class="mt-1 max-w-[56ch] text-sm text-pretty text-neutral-500 max-sm:hidden">{company.description}</p>
                           <div class="mt-3 flex flex-wrap gap-1.5 md:hidden">
                             {company.services.slice(0, 2).map((service: string) => (
                               <span class="rounded-md bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">{service}</span>
@@ -214,9 +214,9 @@ const jsonLd = [servicesItemList, suppliersItemList, breadcrumbSchema];
                     <td class="px-3 py-6 align-top max-lg:hidden">
                       <span class="text-sm text-neutral-600">{company.city}</span>
                     </td>
-                    <td class="px-3 py-6 align-top">
-                      <div class="flex items-baseline gap-1">
-                        <span class="text-2xl font-semibold tabular-nums text-neutral-900">{company.ranking_score}</span>
+                    <td class="px-2 py-5 align-top sm:px-3 sm:py-6">
+                      <div class="flex items-baseline gap-1 whitespace-nowrap">
+                        <span class="text-xl font-semibold tabular-nums text-neutral-900 sm:text-2xl">{company.ranking_score}</span>
                         <span class="text-sm text-neutral-400">/10</span>
                       </div>
                     </td>
