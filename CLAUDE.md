@@ -214,4 +214,4 @@ Services nav polish + a new `/services` index. No DB/migration changes.
 - **Live visual QA (agent-browser) on kitchen-directory.vercel.app at 1280×800 + 375×812** — dropdown icons render per-slug and match the homepage; `/services` hero/cards/suppliers table render with real data (7 suppliers, Shop at Stop #1). Preview deploys are SSO-gated, so QA ran against the public production alias post-merge.
 
 ### Known / follow-ups
-- **Minor (pre-existing):** the shared suppliers table clips the `/10` score suffix slightly at ~375px — same on `/services/[slug]`, not introduced here. Tighten the Score column for narrow mobile if desired.
+- **Resolved (PR #20):** the shared suppliers table (`/services` + `/services/[slug]`) clipped the `/10` score suffix at ~375px (table overflowed its `overflow-hidden` wrapper by ~26px). Fixed with mobile-first cell padding (`sm:` restores desktop), `whitespace-nowrap` + `text-xl sm:text-2xl` on the score, `flex-wrap` on the name/badge row, and `max-sm:hidden` on the row description. Validated 26px → 0px in a 375px repro harness and live on prod (mobile + desktop, both pages). CSS-only.
