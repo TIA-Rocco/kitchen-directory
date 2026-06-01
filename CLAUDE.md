@@ -199,3 +199,20 @@ After pulling: apply `supabase/migrations/003_partners.sql` and `004_blog.sql` t
 - **Mailgun edge-function secret** still unset (email delivery) — non-blocking now that submissions auto-verify; set it via the TIA team Vercel/Supabase scope to enable notification emails. Reject/needs-info applicant emails are still mailto (server-side templates pending edge config).
 - **P3 (accepted):** approval fires two deploy hooks (company insert + status update) — harmless extra rebuild.
 - 17 stale branches are all merged-by-patch (`git cherry`) and safe to delete; duplicate 005/006 migration numbers are latent (left as-is, forward-only 007-011 added).
+
+## What Was Built (Session: 2026-06-01, branch fix/security-prelaunch)
+Pre-launch black-box + source **security audit** (`/security-audit`) and the launch-blocking fixes. Full report + owner message + fix prompts in `.context/kitchen-directory.vercel.app-*` (gitignored).
+
+**Findings (verified against live prod): 1 Critical, 2 High, plus mediums/lows.** The app's front-door auth (admin middleware `getUser()` + `ADMIN_EMAILS`, email Edge Function `EDGE_SHARED_SECRET`, server-only service-role key) is solid; the gaps were all in **direct PostgREST access** that bypasses the app.
+
+Applied:
+1. **SEC-03 (High) — stored XSS via JSON-LD.** `Base.astro` emitted `set:html={JSON.stringify(schema)}`; `JSON.stringify` doesn't escape `<`/`>`/`&`, so a review body / FAQ answer with `</script>` could break out and execute. New `src/lib/jsonld.ts` `safeJsonLd()` escapes `<`,`>`,`&`,U+2028,U+2029 (valid round-trip JSON). 6 unit tests. **Deploys with this branch.**
+2. **Migration `013_security_prelaunch_rls.sql` (applied to prod via MCP + verified):**
+   - SEC-02 (High): `reviews` INSERT `with check (true)` → `(status='pending')` — kills anon self-publishing of `approved` reviews (moderation + AggregateRating bypass).
+   - SEC-06 (Med): `supplier_submissions` INSERT → constrained to the `unverified` entry state — blocks bypassing Turnstile/rate-limit/validation via direct REST.
+   - SEC-01 (Critical, layer 2): `supplier_submissions` SELECT/UPDATE re-scoped from the whole `authenticated` role to allow-listed admins via new `public.is_admin()` (SECURITY DEFINER, reads Vault `admin_emails`; EXECUTE revoked from anon/public, granted to authenticated). Verified: admin sees rows, non-admin sees 0, anon blocked.
+
+**STILL REQUIRED before launch (could not be done via code/MCP):**
+- 🔴 **SEC-01 primary fix — disable public signup.** Supabase **Auth → Providers → Email → uncheck "Allow new users to sign up"** (`disable_signup:true`). Project-level signup is currently OPEN, which is what let any internet user mint an `authenticated` session and (pre-013) read all supplier PII. The 013 RLS scoping is the second layer; this toggle is the primary fix.
+
+**Out of scope / documented but not fixed (Low/hardening, see report):** 6 `function_search_path_mutable`, `pg_net` in public schema, GraphQL anon/authenticated table *metadata* exposure (row data is RLS-protected — verified), missing security headers (recommend `vercel.json` CSP etc.), no rate-limit/CAPTCHA on `/api/review` + `/api/contact` (admin email-bomb vector once Mailgun is configured). `contact_submissions` INSERT stays `with check(true)` by design (public form, insert-only, no readable PII). SEC-07 (open redirect) was already fixed in #16/#17.
