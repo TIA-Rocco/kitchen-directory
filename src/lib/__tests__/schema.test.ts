@@ -44,6 +44,7 @@ function makeCompany(overrides: Partial<Company> = {}): Company {
       certifications: 6,
     },
     services: ['installation', 'repair'],
+    certifications: [],
     faq: [],
     partners: [],
     is_featured: false,

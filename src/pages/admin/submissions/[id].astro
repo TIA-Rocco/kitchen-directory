@@ -20,9 +20,14 @@ function fmt(ts: string | null) {
   return ts ? new Date(ts).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' }) : '—';
 }
 
+// Submissions store service *slugs*; map them to display names for readability
+// (this is exactly the mapping approve_submission() applies on the DB side).
+const { data: cats } = await supabaseAdmin.from('service_categories').select('name, slug');
+const slugToName = new Map((cats ?? []).map((c) => [c.slug, c.name]));
+
 const addr = (sub.address ?? {}) as Record<string, string>;
 const faqs = (sub.faq ?? []) as { question: string; answer: string }[];
-const services = (sub.services ?? []) as string[];
+const services = ((sub.services ?? []) as string[]).map((s) => slugToName.get(s) ?? s);
 const certs = (sub.certifications ?? []) as string[];
 
 const isClosed = sub.status === 'approved' || sub.status === 'rejected';
