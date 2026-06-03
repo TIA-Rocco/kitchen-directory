@@ -5,6 +5,7 @@ import Footer from '../../components/Footer.astro';
 import { buildItemListSchema, buildFAQPageSchema } from '../../lib/schema';
 import type { FaqItem } from '../../lib/types';
 import { supabase } from '../../lib/supabase';
+import { buildReviewMap, averageRating } from '../../lib/reviews';
 
 export async function getStaticPaths() {
   const { data: services } = await supabase
@@ -16,6 +17,18 @@ export async function getStaticPaths() {
     .is('deleted_at', null)
     .order('ranking_score', { ascending: false });
 
+  // Approved review stats per company, aggregated once for all category pages
+  // (mirrors the homepage logic in index.astro). Without this the Reviews
+  // column would render 0 for every supplier regardless of real reviews.
+  // Aggregation/rounding lives in lib/reviews.ts — see the note there on why
+  // the arithmetic must stay out of .astro frontmatter.
+  const { data: reviewStats } = await supabase
+    .from('reviews')
+    .select('company_id, rating')
+    .eq('status', 'approved');
+
+  const reviewMap = buildReviewMap(reviewStats);
+
   return (services || []).map((service) => {
     const filtered = (allCompanies || []).filter((c) =>
       c.services.includes(service.name)
@@ -26,12 +39,15 @@ export async function getStaticPaths() {
         serviceName: service.name,
         description: service.description as string,
         faq: (service.faq || []) as FaqItem[],
-        companies: filtered.map((c) => ({
-          ...c,
-          city: c.address?.city || '',
-          review_count: 0,
-          avg_rating: 0,
-        })),
+        companies: filtered.map((c) => {
+          const stat = reviewMap.get(c.id);
+          return {
+            ...c,
+            city: c.address?.city || '',
+            review_count: stat?.count || 0,
+            avg_rating: averageRating(stat),
+          };
+        }),
       },
     };
   });
