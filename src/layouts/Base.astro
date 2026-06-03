@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import Analytics from '@vercel/analytics/astro';
+import { safeJsonLd } from '../lib/jsonld';
 
 interface Props {
   title: string;
@@ -50,9 +51,9 @@ const ogImageAlt = `${siteName}: ${title}`;
     {jsonLd && (
       Array.isArray(jsonLd)
         ? jsonLd.map((schema) => (
-            <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+            <script type="application/ld+json" set:html={safeJsonLd(schema)} />
           ))
-        : <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+        : <script type="application/ld+json" set:html={safeJsonLd(jsonLd)} />
     )}
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
