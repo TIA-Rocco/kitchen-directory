@@ -217,7 +217,7 @@ Services nav polish + a new `/services` index. No DB/migration changes.
 - **Resolved (PR #20):** the shared suppliers table (`/services` + `/services/[slug]`) clipped the `/10` score suffix at ~375px (table overflowed its `overflow-hidden` wrapper by ~26px). Fixed with mobile-first cell padding (`sm:` restores desktop), `whitespace-nowrap` + `text-xl sm:text-2xl` on the score, `flex-wrap` on the name/badge row, and `max-sm:hidden` on the row description. Validated 26px → 0px in a 375px repro harness and live on prod (mobile + desktop, both pages). CSS-only.
 
 ## What Was Built (Session: 2026-06-01 → 06-03, PR #22 fix/security-prelaunch)
-Pre-launch black-box + source **security audit** (`/security-audit`) and the launch-blocking fixes. Full report + owner message + fix prompts in `.context/kitchen-directory.vercel.app-*` (gitignored).
+Pre-launch black-box + source **security audit** (`/security-audit`) and the launch-blocking fixes.
 
 **Findings (verified against live prod): 1 Critical, 2 High, plus mediums/lows.** The app's front-door auth (admin middleware `getUser()` + `ADMIN_EMAILS`, email Edge Function `EDGE_SHARED_SECRET`, server-only service-role key) is solid; the gaps were all in **direct PostgREST access** that bypasses the app.
 
@@ -232,7 +232,7 @@ Applied:
 **Out of scope / documented but not fixed (Low/hardening, see report):** 6 `function_search_path_mutable`, `pg_net` in public schema, GraphQL anon/authenticated table *metadata* exposure (row data is RLS-protected — verified), missing security headers (recommend `vercel.json` CSP etc.), no rate-limit/CAPTCHA on `/api/review` + `/api/contact` (admin email-bomb vector once Mailgun is configured). `contact_submissions` INSERT stays `with check(true)` by design (public form, insert-only, no readable PII). SEC-07 (open redirect) was already fixed in #16/#17.
 
 ### Security hardening backlog (post-launch — revisit)
-Non-blocking items from the 2026-06-01 audit. All four launch-blockers (SEC-01/02/03/06) are fixed + verified live; these are the remaining lows/mediums. Full paste-ready fixes live in `.context/kitchen-directory.vercel.app-security-audit-2026-06-01.md` and `…-fixes-as-prompts.md` (gitignored, local to Rocco's machine).
+Non-blocking items from the 2026-06-01 audit. All four launch-blockers (SEC-01/02/03/06) are fixed + verified live; these are the remaining lows/mediums.
 
 1. **SEC-04 — Security headers (`vercel.json`).** Only HSTS is sent today. Add `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy`, and a CSP — start as `Content-Security-Policy-Report-Only`, watch reports, then promote to enforcing. The CSP is also a second layer behind the SEC-03 XSS fix. CSP notes: `connect-src` must include `https://awksvtteuzrzwazqxxyi.supabase.co`; `script-src`/`frame-src` must allow Cloudflare Turnstile (`https://challenges.cloudflare.com`) + Vercel analytics (`https://va.vercel-scripts.com`); `style-src`/`font-src` allow `https://rsms.me` (Inter). Verify the Turnstile widget + Inter font still load after enforcing.
 
