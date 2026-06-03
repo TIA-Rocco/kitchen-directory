@@ -1,0 +1,273 @@
+---
+// Services index (/services). Two jobs:
+//   1. List every service category as an icon card (mirrors the homepage grid).
+//   2. Present ONE overarching ranked list of every active supplier — the master
+//      directory across all services, not the homepage's top-5 teaser.
+// SSG: pre-rendered from Supabase at build time like every other crawlable page.
+import Base from '../../layouts/Base.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import ServiceIcon from '../../components/ServiceIcon.astro';
+import { buildItemListSchema } from '../../lib/schema';
+import { supabase } from '../../lib/supabase';
+
+// Service categories (icon cards). card_blurb is the short homepage summary;
+// description is the long-form fallback for any category without a blurb.
+const { data: serviceCategoriesRaw } = await supabase
+  .from('service_categories')
+  .select('slug, name, description, card_blurb')
+  .order('name');
+
+const serviceCategories = serviceCategoriesRaw || [];
+
+// All active suppliers, ranked — the overarching master list.
+const { data: companiesRaw } = await supabase
+  .from('companies')
+  .select('*')
+  .is('deleted_at', null)
+  .order('ranking_score', { ascending: false });
+
+// Approved-review stats per company (same shape the homepage builds).
+const { data: reviewStats } = await supabase
+  .from('reviews')
+  .select('company_id, rating')
+  .eq('status', 'approved');
+
+const reviewMap = new Map<string, { count: number; sum: number }>();
+for (const r of reviewStats || []) {
+  const existing = reviewMap.get(r.company_id) || { count: 0, sum: 0 };
+  existing.count++;
+  existing.sum += r.rating;
+  reviewMap.set(r.company_id, existing);
+}
+
+const companies = (companiesRaw || []).map((c) => {
+  const stats = reviewMap.get(c.id) || { count: 0, sum: 0 };
+  return {
+    ...c,
+    review_count: stats.count,
+    avg_rating: stats.count > 0 ? Math.round((stats.sum / stats.count) * 10) / 10 : 0,
+    city: c.address?.city || '',
+  };
+});
+
+// Suppliers ItemList scoped to /services (reinforces the homepage ranking on a
+// services-intent URL). Services ItemList + BreadcrumbList aid AEO/crawlers.
+const suppliersItemList = buildItemListSchema(
+  companies,
+  'Top Commercial Kitchen Equipment Suppliers in Canada',
+  'https://kitchenequipment.ca/services'
+);
+
+const servicesItemList = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: 'Commercial Kitchen Equipment Supplier Services',
+  url: 'https://kitchenequipment.ca/services',
+  numberOfItems: serviceCategories.length,
+  itemListElement: serviceCategories.map((s, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    name: s.name,
+    url: `https://kitchenequipment.ca/services/${s.slug}`,
+  })),
+};
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://kitchenequipment.ca' },
+    { '@type': 'ListItem', position: 2, name: 'Services', item: 'https://kitchenequipment.ca/services' },
+  ],
+};
+
+const jsonLd = [servicesItemList, suppliersItemList, breadcrumbSchema];
+---
+
+<Base
+  title="Services & Supplier Directory"
+  description="Browse every commercial kitchen equipment service — from procurement and financing to design and installation — and compare every ranked supplier in Canada in one place."
+  jsonLd={jsonLd}
+>
+  <Header />
+
+  <main>
+    <!-- Breadcrumb -->
+    <div class="border-b border-neutral-950/5 bg-neutral-50">
+      <div class="mx-auto max-w-7xl px-6 py-3">
+        <nav class="flex items-center gap-2 text-sm text-neutral-500" aria-label="Breadcrumb">
+          <a href="/" class="hover:text-neutral-700">Home</a>
+          <span>/</span>
+          <span class="text-neutral-900">Services</span>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Hero -->
+    <section class="bg-neutral-950 py-16">
+      <div class="mx-auto max-w-7xl px-6">
+        <h1 class="max-w-[24ch] text-5xl font-semibold tracking-tight text-balance text-white">Services &amp; supplier directory</h1>
+        <p class="mt-6 max-w-[56ch] text-lg text-pretty text-neutral-400">
+          Browse every service commercial kitchen equipment suppliers offer, then compare all {companies.length} ranked suppliers in Canada — scored on service range, reviews, experience, and more.
+        </p>
+      </div>
+    </section>
+
+    <!-- Service category grid (mirrors the homepage icon cards). -->
+    <section id="services" class="py-16 sm:py-20">
+      <div class="mx-auto max-w-7xl px-6">
+        <div class="max-w-2xl">
+          <h2 class="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl">Browse by service</h2>
+          <p class="mt-3 text-pretty text-neutral-500">
+            Find suppliers by the service you need, from equipment procurement and financing to design and installation.
+          </p>
+        </div>
+
+        <ul class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {serviceCategories.map((category) => (
+            <li>
+              <a
+                href={`/services/${category.slug}`}
+                class="group flex h-full flex-col rounded-2xl border border-neutral-200 bg-white p-6 transition hover:border-emerald-300 hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+              >
+                <span class="flex size-12 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-[0_3px_10px_rgba(0,0,0,0.13)]">
+                  <ServiceIcon slug={category.slug} class="size-6" />
+                </span>
+                <h3 class="mt-4 text-base font-semibold text-neutral-900 group-hover:text-emerald-600">
+                  {category.name}
+                </h3>
+                <p class="mt-1.5 grow text-sm text-pretty text-neutral-500">{category.card_blurb || category.description}</p>
+                <span class="mt-4 inline-flex items-center gap-1 text-sm font-medium text-emerald-600">
+                  View suppliers
+                  <svg class="size-4 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+
+    <!-- Overarching ranked list: every active supplier across all services. -->
+    <section id="suppliers" class="border-t border-neutral-200 bg-neutral-50 py-16 sm:py-20">
+      <div class="mx-auto max-w-7xl px-6">
+        <div class="max-w-2xl">
+          <h2 class="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl">All suppliers, ranked</h2>
+          <p class="mt-3 text-pretty text-neutral-500">
+            Every commercial kitchen equipment supplier in our directory, ranked by our editorial scoring system across service range, customer reviews, industry experience, and more.
+          </p>
+        </div>
+
+        {companies.length > 0 ? (
+          <div class="mt-10 overflow-hidden rounded-xl bg-white ring-1 ring-black/5">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="border-b border-neutral-950/5 bg-neutral-50">
+                  <th class="py-3.5 pr-2 pl-4 text-xs font-medium text-neutral-500 sm:pr-3 sm:pl-6">Rank</th>
+                  <th class="px-2 py-3.5 text-xs font-medium text-neutral-500 sm:px-3">Supplier</th>
+                  <th class="px-3 py-3.5 text-xs font-medium text-neutral-500 max-lg:hidden">Location</th>
+                  <th class="px-2 py-3.5 text-xs font-medium text-neutral-500 sm:px-3">Score</th>
+                  <th class="px-3 py-3.5 text-xs font-medium text-neutral-500 max-md:hidden">Reviews</th>
+                  <th class="py-3.5 pr-6 pl-3 text-xs font-medium text-neutral-500 max-md:hidden">Services</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-neutral-950/5">
+                {companies.map((company: any, idx: number) => (
+                  <tr class="group transition-colors hover:bg-neutral-50/80">
+                    <td class="py-5 pr-2 pl-4 align-top sm:py-6 sm:pr-3 sm:pl-6">
+                      <span class:list={[
+                        'inline-flex size-8 items-center justify-center rounded-lg text-sm font-semibold tabular-nums',
+                        idx === 0 ? 'bg-emerald-600 text-white' : 'bg-neutral-100 text-neutral-600'
+                      ]}>
+                        {idx + 1}
+                      </span>
+                    </td>
+                    <td class="px-2 py-5 align-top sm:px-3 sm:py-6">
+                      <div class="flex items-start gap-3 sm:gap-4">
+                        <div class="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white ring-1 ring-black/5 text-lg font-semibold text-neutral-400">
+                          {company.logo_url ? (
+                            <img src={company.logo_url} alt={`${company.name} logo`} class="size-full object-contain p-1.5" loading="lazy" />
+                          ) : (
+                            company.name.charAt(0)
+                          )}
+                        </div>
+                        <div class="min-w-0">
+                          <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                            <a href={`/companies/${company.slug}`} class="text-base font-semibold text-neutral-900 group-hover:text-emerald-600">{company.name}</a>
+                            {company.is_featured && (
+                              <span class="inline-flex shrink-0 items-center rounded-full bg-emerald-50 py-0.5 pr-2 pl-1 text-xs font-medium whitespace-nowrap text-emerald-700">
+                                <span class="mr-1 inline-flex size-4 items-center justify-center rounded-full bg-emerald-600 text-[10px] text-white">1</span>
+                                Top Rated
+                              </span>
+                            )}
+                          </div>
+                          <p class="mt-1 max-w-[56ch] text-sm text-pretty text-neutral-500 max-sm:hidden">{company.description}</p>
+                          <div class="mt-3 flex flex-wrap gap-1.5 md:hidden">
+                            {company.services.slice(0, 2).map((service: string) => (
+                              <span class="rounded-md bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">{service}</span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-3 py-6 align-top max-lg:hidden">
+                      <span class="text-sm text-neutral-600">{company.city}</span>
+                    </td>
+                    <td class="px-2 py-5 align-top sm:px-3 sm:py-6">
+                      <div class="flex items-baseline gap-1 whitespace-nowrap">
+                        <span class="text-xl font-semibold tabular-nums text-neutral-900 sm:text-2xl">{company.ranking_score}</span>
+                        <span class="text-sm text-neutral-400">/10</span>
+                      </div>
+                    </td>
+                    <td class="px-3 py-6 align-top max-md:hidden">
+                      {company.review_count > 0 ? (
+                        <>
+                          <div class="flex items-center gap-1.5">
+                            <div class="flex text-amber-400">
+                              {Array.from({ length: Math.floor(company.avg_rating) }).map(() => (
+                                <svg class="size-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                              ))}
+                            </div>
+                            <span class="text-sm tabular-nums text-neutral-600">{company.avg_rating}</span>
+                          </div>
+                          <p class="mt-0.5 text-xs text-neutral-400">{company.review_count} {company.review_count === 1 ? 'review' : 'reviews'}</p>
+                        </>
+                      ) : (
+                        <p class="text-xs text-neutral-400">No reviews yet</p>
+                      )}
+                    </td>
+                    <td class="py-6 pr-6 pl-3 align-top max-md:hidden">
+                      <div class="flex flex-wrap gap-1.5">
+                        {company.services.slice(0, 3).map((service: string) => (
+                          <span class="rounded-md bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">{service}</span>
+                        ))}
+                        {company.services.length > 3 && (
+                          <span class="rounded-md bg-neutral-100 px-2 py-0.5 text-xs text-neutral-400">+{company.services.length - 3}</span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div class="mt-10 rounded-xl bg-white p-12 text-center ring-1 ring-black/5">
+            <p class="text-neutral-500">No suppliers currently listed. Check back soon.</p>
+          </div>
+        )}
+
+        <div class="mt-10 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-neutral-950 px-6 py-6 sm:px-8">
+          <div>
+            <p class="text-base font-semibold text-white">Run a commercial kitchen equipment company?</p>
+            <p class="mt-1 text-sm text-neutral-400">Get listed in the directory and reach operators comparing suppliers across Canada.</p>
+          </div>
+          <a href="/list-your-company" class="shrink-0 rounded-md bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600">List your company</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Base>

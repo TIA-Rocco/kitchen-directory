@@ -35,6 +35,7 @@ The site looks like an independent directory (kitchenequipment.ca branding, no S
 |-------|------|-------------|
 | `/` | SSG | Homepage with ranked supplier table, service filter chips |
 | `/companies/[slug]` | SSG | Company profile with Schema.org, ranking breakdown, reviews, FAQs, contact sidebar |
+| `/services` | SSG | Services index: 9 service-category icon cards + overarching ranked table of all suppliers |
 | `/services/[slug]` | SSG | Service category page, filtered company list (9 categories) |
 | `/submit-review` | SSG | Review form with star ratings, service category selector, honeypot |
 | `/contact` | SSG | Contact form with general/update-profile toggle, honeypot |
@@ -51,6 +52,7 @@ The site looks like an independent directory (kitchenequipment.ca branding, no S
 |------|-------------|
 | Homepage | WebSite, Organization, ItemList |
 | Company Profile | LocalBusiness, AggregateRating, FAQPage, Service, Review |
+| Services Index | ItemList (services), ItemList (suppliers), BreadcrumbList |
 | Service Category | ItemList, Service, BreadcrumbList |
 
 ## Database Schema (Supabase)
@@ -200,19 +202,31 @@ After pulling: apply `supabase/migrations/003_partners.sql` and `004_blog.sql` t
 - **P3 (accepted):** approval fires two deploy hooks (company insert + status update) — harmless extra rebuild.
 - 17 stale branches are all merged-by-patch (`git cherry`) and safe to delete; duplicate 005/006 migration numbers are latent (left as-is, forward-only 007-011 added).
 
-## What Was Built (Session: 2026-06-01, branch fix/security-prelaunch)
+## What Was Built (Session: 2026-05-30, PR #18 feat/services-index-dropdown-icons)
+Services nav polish + a new `/services` index. No DB/migration changes.
+
+1. **Services dropdown icons.** Each row in the desktop Services dropdown now renders the homepage `ServiceIcon` in an emerald tile (emerald-50, fills emerald-600 on hover/focus); panel widened 30rem → 34rem to absorb the icon column. `Header.astro` imports `ServiceIcon`.
+2. **New `/services` index page** (`src/pages/services/index.astro`, SSG). Hero + breadcrumb, the 9 service-category icon cards (mirrors the homepage grid), and **one overarching ranked table of every active supplier** across all services — the master directory, not the homepage top-5. Reuses the homepage companies + approved-review-stats query and the `/services/[slug]` table markup. "Browse all services" in the dropdown now points here (was the `/#categories` anchor).
+3. **Schema.org.** `/services` emits services `ItemList` + suppliers `ItemList` (scoped to the `/services` URL) + `BreadcrumbList`. Homepage's primary supplier `ItemList` untouched. `/services/[slug]` breadcrumb's "Services" crumb now links to `/services` (schema already referenced it).
+
+### Verification
+- `astro build` renders `/services` + all routes; null-data fallbacks confirmed via smoke build.
+- **Live visual QA (agent-browser) on kitchen-directory.vercel.app at 1280×800 + 375×812** — dropdown icons render per-slug and match the homepage; `/services` hero/cards/suppliers table render with real data (7 suppliers, Shop at Stop #1). Preview deploys are SSO-gated, so QA ran against the public production alias post-merge.
+
+### Known / follow-ups
+- **Resolved (PR #20):** the shared suppliers table (`/services` + `/services/[slug]`) clipped the `/10` score suffix at ~375px (table overflowed its `overflow-hidden` wrapper by ~26px). Fixed with mobile-first cell padding (`sm:` restores desktop), `whitespace-nowrap` + `text-xl sm:text-2xl` on the score, `flex-wrap` on the name/badge row, and `max-sm:hidden` on the row description. Validated 26px → 0px in a 375px repro harness and live on prod (mobile + desktop, both pages). CSS-only.
+
+## What Was Built (Session: 2026-06-01 → 06-03, PR #22 fix/security-prelaunch)
 Pre-launch black-box + source **security audit** (`/security-audit`) and the launch-blocking fixes. Full report + owner message + fix prompts in `.context/kitchen-directory.vercel.app-*` (gitignored).
 
 **Findings (verified against live prod): 1 Critical, 2 High, plus mediums/lows.** The app's front-door auth (admin middleware `getUser()` + `ADMIN_EMAILS`, email Edge Function `EDGE_SHARED_SECRET`, server-only service-role key) is solid; the gaps were all in **direct PostgREST access** that bypasses the app.
 
 Applied:
-1. **SEC-03 (High) — stored XSS via JSON-LD.** `Base.astro` emitted `set:html={JSON.stringify(schema)}`; `JSON.stringify` doesn't escape `<`/`>`/`&`, so a review body / FAQ answer with `</script>` could break out and execute. New `src/lib/jsonld.ts` `safeJsonLd()` escapes `<`,`>`,`&`,U+2028,U+2029 (valid round-trip JSON). 6 unit tests. **Deploys with this branch.**
+1. **SEC-03 (High) — stored XSS via JSON-LD.** `Base.astro` emitted `set:html={JSON.stringify(schema)}`; `JSON.stringify` doesn't escape `<`/`>`/`&`, so a review body / FAQ answer with `</script>` could break out and execute. New `src/lib/jsonld.ts` `safeJsonLd()` escapes `<`,`>`,`&`,U+2028,U+2029 (valid round-trip JSON). 6 unit tests. Ships in PR #22.
 2. **Migration `013_security_prelaunch_rls.sql` (applied to prod via MCP + verified):**
    - SEC-02 (High): `reviews` INSERT `with check (true)` → `(status='pending')` — kills anon self-publishing of `approved` reviews (moderation + AggregateRating bypass).
    - SEC-06 (Med): `supplier_submissions` INSERT → constrained to the `unverified` entry state — blocks bypassing Turnstile/rate-limit/validation via direct REST.
    - SEC-01 (Critical, layer 2): `supplier_submissions` SELECT/UPDATE re-scoped from the whole `authenticated` role to allow-listed admins via new `public.is_admin()` (SECURITY DEFINER, reads Vault `admin_emails`; EXECUTE revoked from anon/public, granted to authenticated). Verified: admin sees rows, non-admin sees 0, anon blocked.
-
-**STILL REQUIRED before launch (could not be done via code/MCP):**
-- 🔴 **SEC-01 primary fix — disable public signup.** Supabase **Auth → Providers → Email → uncheck "Allow new users to sign up"** (`disable_signup:true`). Project-level signup is currently OPEN, which is what let any internet user mint an `authenticated` session and (pre-013) read all supplier PII. The 013 RLS scoping is the second layer; this toggle is the primary fix.
+3. **SEC-01 primary fix — public signup DISABLED** (`disable_signup:true`). Black-box confirmed: `POST /auth/v1/signup` → `422 signup_disabled`. This is what previously let any internet user mint an `authenticated` session; 013 is the second layer.
 
 **Out of scope / documented but not fixed (Low/hardening, see report):** 6 `function_search_path_mutable`, `pg_net` in public schema, GraphQL anon/authenticated table *metadata* exposure (row data is RLS-protected — verified), missing security headers (recommend `vercel.json` CSP etc.), no rate-limit/CAPTCHA on `/api/review` + `/api/contact` (admin email-bomb vector once Mailgun is configured). `contact_submissions` INSERT stays `with check(true)` by design (public form, insert-only, no readable PII). SEC-07 (open redirect) was already fixed in #16/#17.
