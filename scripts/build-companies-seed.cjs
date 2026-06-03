@@ -463,6 +463,8 @@ const LOGO_FILES = {
   'avondale-commercial-solutions': 'avondale-commercial-solutions.png',
   'mp-hvac': 'mp-hvac.png',
   'canadian-restaurant-supply': 'canadian-restaurant-supply.png',
+  // third pass: real logo recovered from the company's Facebook page
+  'ifoodequipment': 'ifoodequipment.png',
 };
 
 // --- SQL helpers --------------------------------------------------------------

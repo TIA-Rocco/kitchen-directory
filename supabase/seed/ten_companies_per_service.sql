@@ -761,6 +761,7 @@ update public.companies set logo_url = '/logos/enterprise-restaurant-consulting.
 update public.companies set logo_url = '/logos/fincap-financial-group.png' where slug = 'fincap-financial-group';
 update public.companies set logo_url = '/logos/zanduco.png' where slug = 'zanduco';
 update public.companies set logo_url = '/logos/the-cooks-mate.png' where slug = 'the-cooks-mate';
+update public.companies set logo_url = '/logos/ifoodequipment.png' where slug = 'ifoodequipment';
 update public.companies set logo_url = '/logos/ontario-restaurant-supply.png' where slug = 'ontario-restaurant-supply';
 update public.companies set logo_url = '/logos/a1-cash-and-carry.png' where slug = 'a1-cash-and-carry';
 update public.companies set logo_url = '/logos/franchise-360.png' where slug = 'franchise-360';
