@@ -243,3 +243,20 @@ Non-blocking items from the 2026-06-01 audit. All four launch-blockers (SEC-01/0
 4. **SEC-10 (low) — Logo upload magic-byte check** in `src/pages/api/list-company.ts`: sniff PNG (`89 50 4E 47`) / JPEG (`FF D8 FF`) before upload rather than trusting the client-declared MIME; keep the existing size + SVG-exclusion checks.
 
 Informational (no action): GraphQL anon/authenticated table-exposure advisors are *metadata discoverability* only — row data is RLS-protected (verified live). `auth_leaked_password_protection` advisor is N/A (magic-link only, no passwords).
+
+## What Was Built (Session: 2026-06-03, PR #24 — Playwright E2E + a11y/font fixes)
+Stood up the post-launch E2E suite (the long-standing `/playwright-review` TODO). It surfaced two real production bugs, both fixed in the same PR. Shipped via PR #24 (squash) and canary-verified live.
+
+1. **Playwright E2E suite (`e2e/`, 178 tests / 15 files).** Targets the public prod alias by default (`BASE_URL` overridable; Vercel previews are SSO-gated so headless QA must hit the public alias). Covers: homepage, all 7 company profiles, all 9 service pages, blog index + 9 posts (incl. markdown XSS sanitization), static pages + real 404s, SEO (robots/sitemap/canonical/OG/Twitter + **site-wide JSON-LD validity** — compatible with the SEC-03 `safeJsonLd` escaping), accessibility (axe-core WCAG 2.1 A/AA, critical = hard fail), responsive (375 + 1280), all 4 forms (validation, honeypot, Turnstile bot-gate, real inserts tagged `[[KE-E2E]]` then deleted), and admin (unauth gate + authenticated flows via a programmatic Supabase session fixture; self-skip without creds). Adds `playwright.config.ts`, `e2e/fixtures.ts`, `e2e/auth.setup.ts`, `e2e/README.md`; npm `test:e2e*` scripts; dev deps `@playwright/test` + `@axe-core/playwright`.
+2. **Font CORS fix.** Inter was `@import`ed from `rsms.me`, which serves font files with no `Access-Control-Allow-Origin` → Chrome CORS-blocked `InterVariable.woff2` and the site silently fell back to system fonts. Self-hosted the variable font at `public/fonts/` (`@font-face` in `src/styles/global.css` + `<link rel=preload>` in `Base.astro`). **Note for SEC-04 CSP:** `font-src` no longer needs `https://rsms.me` — fonts are now same-origin (`'self'`).
+3. **Critical a11y fix.** The 5 star-rating radios on `/submit-review` had no accessible name (the `<label>` wrapped only an SVG). Added per-radio `aria-label` ("1 star"…"5 stars") + `role="radiogroup"`.
+4. **Local Stop-hook** (`.claude/hooks/e2e-on-large-change.sh`, registered in personal gitignored `.claude/settings.local.json`): after a large local app-source change it auto-runs the read-only public smoke (`npx playwright test e2e/public`); threshold + cooldown + debounce; never runs forms/admin specs (they write data). Self-guarding no-op until the suite + Playwright are present.
+
+### Verification
+- Triage drove 36 → 0 failures across prod runs; assertions are invariant-based where prod data drifts (active-company roster grew 7→8 mid-build).
+- Post-deploy canary: self-hosted font live (HTTP 200) + **126/126 public tests green** against prod, confirming both fixes are live.
+
+### Known / follow-ups
+- Non-blocking findings documented in `e2e/README.md`: `neutral-400` colour-contrast (serious a11y), `/contact` `submit_company` option 400s on a no-JS POST, and the Vercel edge returning 403 to header-less API POSTs (a CSRF posture, replicated in tests via `apiHeaders()`).
+- Admin authenticated specs self-skip unless `SUPABASE_SERVICE_ROLE_KEY` (or `E2E_ADMIN_PASSWORD`) is supplied via gitignored `.env.e2e`.
+- SEC-05 backlog (rate-limit + Turnstile on `/api/review` & `/api/contact`) is now partially testable: the suite exercises the existing honeypot + validation paths.
