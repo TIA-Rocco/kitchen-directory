@@ -728,6 +728,44 @@ update public.companies set faq = jsonb_build_array(
     'answer', name || ' offers ' || array_to_string(services, ', ') || '.')
 ) where slug in ('tfi-food-equipment', 'united-trimen', 'doyon-despres', 'hesco-foodservice', 'hubert-canada', 'econolease', 'bouthillette-parizeau', 'browne-foodservice', 'celco', 'bakemax', 'kaizen-foodservice', 'paragon-food-equipment', 'gbs-foodservice', 'fsstrategy', 'newcap-leasing', 'babak-food-equipment', 'adl-fournisseur-commercial', 'jfs-restaurant-equipment', 'krg-hospitality', 'brama', 'foundry-kitchens', 'proxpedite', 'continental-restaurant-equipment', 'mehmi-financial-group', 'mck-equipment', 'canadian-restaurant-supply', 'commercial-kitchen-build', 'kaf-bar-supplies', 'ofr-concepts', 'enterprise-restaurant-consulting', 'fincap-financial-group', 'zanduco', 'the-cooks-mate', 'ifoodequipment', 'ontario-restaurant-supply', 'a1-cash-and-carry', 'franchise-360', 'mp-hvac', 'apex-electric-mechanical', 'avondale-commercial-solutions', 'toronto-restaurant-consultants', 'fried-sage-hospitality', 'mb-food-equipment', 'kitchen-treasure');
 
+-- Self-hosted brand logos (files live under public/logos/).
+update public.companies set logo_url = '/logos/tfi-food-equipment.png' where slug = 'tfi-food-equipment';
+update public.companies set logo_url = '/logos/united-trimen.png' where slug = 'united-trimen';
+update public.companies set logo_url = '/logos/doyon-despres.png' where slug = 'doyon-despres';
+update public.companies set logo_url = '/logos/hesco-foodservice.png' where slug = 'hesco-foodservice';
+update public.companies set logo_url = '/logos/hubert-canada.png' where slug = 'hubert-canada';
+update public.companies set logo_url = '/logos/econolease.png' where slug = 'econolease';
+update public.companies set logo_url = '/logos/bouthillette-parizeau.png' where slug = 'bouthillette-parizeau';
+update public.companies set logo_url = '/logos/browne-foodservice.png' where slug = 'browne-foodservice';
+update public.companies set logo_url = '/logos/celco.png' where slug = 'celco';
+update public.companies set logo_url = '/logos/kaizen-foodservice.png' where slug = 'kaizen-foodservice';
+update public.companies set logo_url = '/logos/paragon-food-equipment.png' where slug = 'paragon-food-equipment';
+update public.companies set logo_url = '/logos/fsstrategy.png' where slug = 'fsstrategy';
+update public.companies set logo_url = '/logos/newcap-leasing.svg' where slug = 'newcap-leasing';
+update public.companies set logo_url = '/logos/babak-food-equipment.png' where slug = 'babak-food-equipment';
+update public.companies set logo_url = '/logos/adl-fournisseur-commercial.png' where slug = 'adl-fournisseur-commercial';
+update public.companies set logo_url = '/logos/jfs-restaurant-equipment.png' where slug = 'jfs-restaurant-equipment';
+update public.companies set logo_url = '/logos/krg-hospitality.png' where slug = 'krg-hospitality';
+update public.companies set logo_url = '/logos/brama.png' where slug = 'brama';
+update public.companies set logo_url = '/logos/foundry-kitchens.png' where slug = 'foundry-kitchens';
+update public.companies set logo_url = '/logos/proxpedite.png' where slug = 'proxpedite';
+update public.companies set logo_url = '/logos/continental-restaurant-equipment.png' where slug = 'continental-restaurant-equipment';
+update public.companies set logo_url = '/logos/mehmi-financial-group.png' where slug = 'mehmi-financial-group';
+update public.companies set logo_url = '/logos/mck-equipment.png' where slug = 'mck-equipment';
+update public.companies set logo_url = '/logos/commercial-kitchen-build.png' where slug = 'commercial-kitchen-build';
+update public.companies set logo_url = '/logos/kaf-bar-supplies.png' where slug = 'kaf-bar-supplies';
+update public.companies set logo_url = '/logos/enterprise-restaurant-consulting.png' where slug = 'enterprise-restaurant-consulting';
+update public.companies set logo_url = '/logos/fincap-financial-group.png' where slug = 'fincap-financial-group';
+update public.companies set logo_url = '/logos/zanduco.png' where slug = 'zanduco';
+update public.companies set logo_url = '/logos/the-cooks-mate.png' where slug = 'the-cooks-mate';
+update public.companies set logo_url = '/logos/ontario-restaurant-supply.png' where slug = 'ontario-restaurant-supply';
+update public.companies set logo_url = '/logos/a1-cash-and-carry.png' where slug = 'a1-cash-and-carry';
+update public.companies set logo_url = '/logos/franchise-360.png' where slug = 'franchise-360';
+update public.companies set logo_url = '/logos/apex-electric-mechanical.png' where slug = 'apex-electric-mechanical';
+update public.companies set logo_url = '/logos/fried-sage-hospitality.png' where slug = 'fried-sage-hospitality';
+update public.companies set logo_url = '/logos/mb-food-equipment.png' where slug = 'mb-food-equipment';
+update public.companies set logo_url = '/logos/kitchen-treasure.png' where slug = 'kitchen-treasure';
+
 alter table public.companies enable trigger trg_company_changed;
 
 commit;

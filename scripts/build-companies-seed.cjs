@@ -414,6 +414,51 @@ const SERVICE_FIXES = [
   { slug: 'igloo-food-equipment', services: [S.CEP] },
 ];
 
+// --- Self-hosted logos (public/logos/<file>) -------------------------------
+// Real brand logos fetched from each company's site (apple-touch-icon / icon /
+// og:image) or icon service, reviewed by hand. 8 companies have no usable logo
+// and intentionally keep the letter-placeholder (bakemax, gbs-foodservice,
+// mp-hvac, ofr-concepts, ifoodequipment, avondale-commercial-solutions,
+// canadian-restaurant-supply, toronto-restaurant-consultants).
+const LOGO_FILES = {
+  'a1-cash-and-carry': 'a1-cash-and-carry.png',
+  'adl-fournisseur-commercial': 'adl-fournisseur-commercial.png',
+  'apex-electric-mechanical': 'apex-electric-mechanical.png',
+  'babak-food-equipment': 'babak-food-equipment.png',
+  'bouthillette-parizeau': 'bouthillette-parizeau.png',
+  'brama': 'brama.png',
+  'browne-foodservice': 'browne-foodservice.png',
+  'celco': 'celco.png',
+  'commercial-kitchen-build': 'commercial-kitchen-build.png',
+  'continental-restaurant-equipment': 'continental-restaurant-equipment.png',
+  'doyon-despres': 'doyon-despres.png',
+  'econolease': 'econolease.png',
+  'enterprise-restaurant-consulting': 'enterprise-restaurant-consulting.png',
+  'fincap-financial-group': 'fincap-financial-group.png',
+  'foundry-kitchens': 'foundry-kitchens.png',
+  'franchise-360': 'franchise-360.png',
+  'fried-sage-hospitality': 'fried-sage-hospitality.png',
+  'fsstrategy': 'fsstrategy.png',
+  'hesco-foodservice': 'hesco-foodservice.png',
+  'hubert-canada': 'hubert-canada.png',
+  'jfs-restaurant-equipment': 'jfs-restaurant-equipment.png',
+  'kaf-bar-supplies': 'kaf-bar-supplies.png',
+  'kaizen-foodservice': 'kaizen-foodservice.png',
+  'kitchen-treasure': 'kitchen-treasure.png',
+  'krg-hospitality': 'krg-hospitality.png',
+  'mb-food-equipment': 'mb-food-equipment.png',
+  'mck-equipment': 'mck-equipment.png',
+  'mehmi-financial-group': 'mehmi-financial-group.png',
+  'newcap-leasing': 'newcap-leasing.svg',
+  'ontario-restaurant-supply': 'ontario-restaurant-supply.png',
+  'paragon-food-equipment': 'paragon-food-equipment.png',
+  'proxpedite': 'proxpedite.png',
+  'tfi-food-equipment': 'tfi-food-equipment.png',
+  'the-cooks-mate': 'the-cooks-mate.png',
+  'united-trimen': 'united-trimen.png',
+  'zanduco': 'zanduco.png',
+};
+
 // --- SQL helpers --------------------------------------------------------------
 function sqlStr(v) {
   if (v === null || v === undefined || v === '') return 'NULL';
@@ -489,6 +534,14 @@ out.push("    'answer', name || ' is based in ' || coalesce((address->>'street')
 out.push("  jsonb_build_object('question', 'What services does ' || name || ' offer for commercial kitchens?',");
 out.push("    'answer', name || ' offers ' || array_to_string(services, ', ') || '.')");
 out.push(`) where slug in (${newSlugs});`);
+out.push('');
+
+// Self-hosted logos (files committed under public/logos/).
+out.push('-- Self-hosted brand logos (files live under public/logos/).');
+for (const c of COMPANIES) {
+  const file = LOGO_FILES[c.slug];
+  if (file) out.push(`update public.companies set logo_url = '/logos/${file}' where slug = ${sqlStr(c.slug)};`);
+}
 out.push('');
 out.push('alter table public.companies enable trigger trg_company_changed;');
 out.push('');
