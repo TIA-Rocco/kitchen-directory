@@ -33,3 +33,11 @@ supabase/.branches/
 
 # content seed intermediates
 supabase/seed/_chunks/
+
+# playwright E2E
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/e2e/.auth/
+.env.e2e
