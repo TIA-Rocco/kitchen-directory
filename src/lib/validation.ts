@@ -60,6 +60,35 @@ export function normalizeServices(input: string[], allowed: readonly string[] = 
   return out;
 }
 
+/**
+ * Normalize certifications from either an array (admin form sends a parsed
+ * array) or a raw comma-separated string (apply form / defensive). Trims,
+ * drops blanks, dedupes case-insensitively, and caps the count.
+ */
+export function normalizeCertifications(input: unknown, max = 20): string[] {
+  let parts: string[] = [];
+  if (Array.isArray(input)) {
+    parts = input.map((c) => (typeof c === 'string' ? c : String(c)));
+  } else if (typeof input === 'string') {
+    parts = input.split(',');
+  }
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const p of parts) {
+    // Clamp per-item length — certifications are short codes/names (CSA, ETL,
+    // Health Canada); this guards the public profile against a pathological
+    // multi-KB string being stored and rendered verbatim.
+    const trimmed = p.trim().slice(0, 100);
+    if (!trimmed) continue;
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(trimmed);
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
 export interface FaqPair {
   question: string;
   answer: string;

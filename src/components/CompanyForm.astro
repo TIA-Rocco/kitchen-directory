@@ -12,6 +12,7 @@ interface CompanyLike {
   is_featured?: boolean;
   address?: Record<string, string>;
   services?: string[];
+  certifications?: string[];
   faq?: FaqItem[];
 }
 interface Props {
@@ -24,6 +25,7 @@ interface Props {
 const { company = {}, serviceCategories, action, mode, submitLabel } = Astro.props;
 const addr = (company.address ?? {}) as Record<string, string>;
 const selected = new Set(company.services ?? []);
+const certifications = (company.certifications ?? []).join(', ');
 const faqs = (company.faq ?? []) as FaqItem[];
 const inputCls = 'mt-1.5 w-full rounded-lg px-3 py-2 text-sm ring-1 ring-black/10 focus:outline-2 focus:-outline-offset-1 focus:outline-emerald-600';
 ---
@@ -79,6 +81,12 @@ const inputCls = 'mt-1.5 w-full rounded-lg px-3 py-2 text-sm ring-1 ring-black/1
       ))}
     </div>
   </fieldset>
+
+  <div>
+    <label class="text-sm font-medium text-neutral-900" for="cf-certifications">Certifications</label>
+    <input id="cf-certifications" data-field="certifications" type="text" value={certifications} class={inputCls} placeholder="Comma-separated, e.g. CSA, ETL, Health Canada" />
+    <p class="mt-1 text-xs text-neutral-500">Separate multiple certifications with commas.</p>
+  </div>
 
   <fieldset>
     <div class="flex items-center justify-between">
@@ -153,6 +161,10 @@ const inputCls = 'mt-1.5 w-full rounded-lg px-3 py-2 text-sm ring-1 ring-black/1
           postal: val('[data-addr="postal"]'),
         },
         services: Array.from(form.querySelectorAll<HTMLInputElement>('[data-service]:checked')).map((c) => c.value),
+        certifications: val('[data-field="certifications"]')
+          .split(',')
+          .map((c) => c.trim())
+          .filter(Boolean),
         faq: Array.from(form.querySelectorAll<HTMLElement>('[data-faq-row]'))
           .map((row) => ({
             question: (row.querySelector('[data-faq-q]') as HTMLInputElement)?.value.trim() ?? '',

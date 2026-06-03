@@ -2,6 +2,7 @@ export const prerender = false;
 
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../../../../lib/supabase-server';
+import { normalizeCertifications } from '../../../../../lib/validation';
 
 // Update editable company fields. NOT slug (immutable — public URL + Schema.org
 // @id), NOT ranking (own endpoint), NOT deleted_at (delete endpoint).
@@ -41,6 +42,10 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     const { data: cats } = await supabaseAdmin.from('service_categories').select('name');
     const valid = new Set((cats ?? []).map((c) => c.name));
     update.services = body.services.map(String).filter((s: string) => valid.has(s));
+  }
+
+  if (body.certifications !== undefined) {
+    update.certifications = normalizeCertifications(body.certifications);
   }
 
   if (Array.isArray(body.faq)) {

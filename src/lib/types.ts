@@ -16,6 +16,7 @@ export interface Company {
   ranking_score: number;
   ranking_breakdown: RankingBreakdown;
   services: string[];
+  certifications: string[];
   faq: FaqItem[];
   partners: Partner[];
   is_featured: boolean;

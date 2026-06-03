@@ -3,6 +3,7 @@ import {
   isFreeEmailProvider,
   isValidCanadianPostalCode,
   normalizeServices,
+  normalizeCertifications,
   validateFaq,
   parseTurnstileResponse,
   ALLOWED_SERVICE_SLUGS,
@@ -91,6 +92,32 @@ describe('normalizeServices', () => {
   it('covers all 9 documented service slugs', () => {
     expect(ALLOWED_SERVICE_SLUGS.length).toBe(9);
     expect(normalizeServices([...ALLOWED_SERVICE_SLUGS])).toEqual([...ALLOWED_SERVICE_SLUGS]);
+  });
+});
+
+describe('normalizeCertifications', () => {
+  it('parses a comma-separated string', () => {
+    expect(normalizeCertifications('CSA, ETL, Health Canada')).toEqual(['CSA', 'ETL', 'Health Canada']);
+  });
+
+  it('accepts an array (admin form sends a parsed array)', () => {
+    expect(normalizeCertifications(['CSA', 'ETL'])).toEqual(['CSA', 'ETL']);
+  });
+
+  it('trims, drops blanks, and dedupes case-insensitively', () => {
+    expect(normalizeCertifications(' CSA , csa, , ETL ')).toEqual(['CSA', 'ETL']);
+  });
+
+  it('caps the count', () => {
+    const many = Array.from({ length: 30 }, (_, i) => `C${i}`);
+    expect(normalizeCertifications(many, 20)).toHaveLength(20);
+  });
+
+  it('returns [] for nullish / unexpected input', () => {
+    expect(normalizeCertifications(null)).toEqual([]);
+    expect(normalizeCertifications(undefined)).toEqual([]);
+    expect(normalizeCertifications(42)).toEqual([]);
+    expect(normalizeCertifications('')).toEqual([]);
   });
 });
 

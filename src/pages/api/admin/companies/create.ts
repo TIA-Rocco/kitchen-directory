@@ -2,6 +2,7 @@ export const prerender = false;
 
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../../../lib/supabase-server';
+import { normalizeCertifications } from '../../../../lib/validation';
 
 // Manually create a company (admin "New company"), independent of the
 // self-submission flow. Slug auto-generated + uniquified by the DB function.
@@ -28,6 +29,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
         .map((f: any) => ({ question: String(f.question).trim(), answer: String(f.answer).trim() }))
     : [];
 
+  const certifications = normalizeCertifications(body.certifications);
+
   const address = {
     street: String(body.address?.street ?? '').trim(),
     city: String(body.address?.city ?? '').trim(),
@@ -53,6 +56,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       logo_url: String(body.logo_url ?? '').trim() || null,
       address,
       services,
+      certifications,
       faq,
       is_featured: body.is_featured === true,
       ranking_breakdown: {
