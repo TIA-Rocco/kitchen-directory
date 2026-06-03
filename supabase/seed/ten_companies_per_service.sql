@@ -738,8 +738,10 @@ update public.companies set logo_url = '/logos/econolease.png' where slug = 'eco
 update public.companies set logo_url = '/logos/bouthillette-parizeau.png' where slug = 'bouthillette-parizeau';
 update public.companies set logo_url = '/logos/browne-foodservice.png' where slug = 'browne-foodservice';
 update public.companies set logo_url = '/logos/celco.png' where slug = 'celco';
+update public.companies set logo_url = '/logos/bakemax.png' where slug = 'bakemax';
 update public.companies set logo_url = '/logos/kaizen-foodservice.png' where slug = 'kaizen-foodservice';
 update public.companies set logo_url = '/logos/paragon-food-equipment.png' where slug = 'paragon-food-equipment';
+update public.companies set logo_url = '/logos/gbs-foodservice.png' where slug = 'gbs-foodservice';
 update public.companies set logo_url = '/logos/fsstrategy.png' where slug = 'fsstrategy';
 update public.companies set logo_url = '/logos/newcap-leasing.svg' where slug = 'newcap-leasing';
 update public.companies set logo_url = '/logos/babak-food-equipment.png' where slug = 'babak-food-equipment';
@@ -752,6 +754,7 @@ update public.companies set logo_url = '/logos/proxpedite.png' where slug = 'pro
 update public.companies set logo_url = '/logos/continental-restaurant-equipment.png' where slug = 'continental-restaurant-equipment';
 update public.companies set logo_url = '/logos/mehmi-financial-group.png' where slug = 'mehmi-financial-group';
 update public.companies set logo_url = '/logos/mck-equipment.png' where slug = 'mck-equipment';
+update public.companies set logo_url = '/logos/canadian-restaurant-supply.png' where slug = 'canadian-restaurant-supply';
 update public.companies set logo_url = '/logos/commercial-kitchen-build.png' where slug = 'commercial-kitchen-build';
 update public.companies set logo_url = '/logos/kaf-bar-supplies.png' where slug = 'kaf-bar-supplies';
 update public.companies set logo_url = '/logos/enterprise-restaurant-consulting.png' where slug = 'enterprise-restaurant-consulting';
@@ -761,7 +764,9 @@ update public.companies set logo_url = '/logos/the-cooks-mate.png' where slug = 
 update public.companies set logo_url = '/logos/ontario-restaurant-supply.png' where slug = 'ontario-restaurant-supply';
 update public.companies set logo_url = '/logos/a1-cash-and-carry.png' where slug = 'a1-cash-and-carry';
 update public.companies set logo_url = '/logos/franchise-360.png' where slug = 'franchise-360';
+update public.companies set logo_url = '/logos/mp-hvac.png' where slug = 'mp-hvac';
 update public.companies set logo_url = '/logos/apex-electric-mechanical.png' where slug = 'apex-electric-mechanical';
+update public.companies set logo_url = '/logos/avondale-commercial-solutions.png' where slug = 'avondale-commercial-solutions';
 update public.companies set logo_url = '/logos/fried-sage-hospitality.png' where slug = 'fried-sage-hospitality';
 update public.companies set logo_url = '/logos/mb-food-equipment.png' where slug = 'mb-food-equipment';
 update public.companies set logo_url = '/logos/kitchen-treasure.png' where slug = 'kitchen-treasure';
