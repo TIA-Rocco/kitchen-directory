@@ -1,5 +1,23 @@
-@import url("https://rsms.me/inter/inter.css");
 @import "tailwindcss";
+
+/* Self-hosted Inter (SIL OFL 1.1). Previously imported from rsms.me, whose font
+   files are served without an Access-Control-Allow-Origin header — so Chrome
+   CORS-blocked InterVariable.woff2 and the site silently fell back to system
+   fonts in production. Hosting locally makes the fetch same-origin. */
+@font-face {
+  font-family: "InterVariable";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/InterVariable.woff2") format("woff2");
+}
+@font-face {
+  font-family: "InterVariable";
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/InterVariable-Italic.woff2") format("woff2");
+}
 
 @theme {
   --font-sans: "InterVariable", sans-serif;
