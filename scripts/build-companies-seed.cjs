@@ -457,6 +457,12 @@ const LOGO_FILES = {
   'the-cooks-mate': 'the-cooks-mate.png',
   'united-trimen': 'united-trimen.png',
   'zanduco': 'zanduco.png',
+  // second pass: scraped header logos
+  'bakemax': 'bakemax.png',
+  'gbs-foodservice': 'gbs-foodservice.png',
+  'avondale-commercial-solutions': 'avondale-commercial-solutions.png',
+  'mp-hvac': 'mp-hvac.png',
+  'canadian-restaurant-supply': 'canadian-restaurant-supply.png',
 };
 
 // --- SQL helpers --------------------------------------------------------------
