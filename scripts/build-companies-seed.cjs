@@ -276,14 +276,6 @@ const COMPANIES = [
     certifications: [], rb: '61',
   },
   {
-    name: 'Old Fashioned Restaurants', slug: 'ofr-concepts',
-    website: 'https://www.ofrconcepts.ca', phone: '(416) 677-1281', email: null,
-    street: '19 Barberry Place', city: 'Toronto', province: 'Ontario', postal: 'M2K 3E3',
-    description: 'Old Fashioned Restaurants (OFR Concepts) is a Toronto hospitality consulting firm founded in 2014. It helps restaurateurs open and operate profitable businesses through concept design, pre-construction project management, kitchen and equipment layout, equipment sourcing, menu engineering and operational audits.',
-    services: [S.RC, S.DTD, S.EC, S.CEP],
-    certifications: [], rb: '61',
-  },
-  {
     name: 'Enterprise Restaurant Consulting', slug: 'enterprise-restaurant-consulting',
     website: 'https://erestaurantconsulting.ca', phone: '(647) 209-4153', email: 'support@erc1.net',
     street: '5800 Ambler Dr., Unit 114', city: 'Mississauga', province: 'Ontario', postal: null,
@@ -369,14 +361,6 @@ const COMPANIES = [
     street: null, city: 'Hamilton', province: 'Ontario', postal: null,
     description: 'Avondale Commercial Solutions is a Hamilton, Ontario commercial kitchen consultant with over 20 years in the foodservice industry. It focuses on a straightforward approach to kitchen design, floor plan layouts, and equipment specification and procurement.',
     services: [S.DTD, S.EC, S.CEP],
-    certifications: [], rb: '56',
-  },
-  {
-    name: 'Toronto Restaurant Consultants', slug: 'toronto-restaurant-consultants',
-    website: 'https://www.restaurantconsultant.ca', phone: null, email: null,
-    street: null, city: 'Toronto', province: 'Ontario', postal: null,
-    description: 'Toronto Restaurant Consultants is a Toronto restaurant consulting firm offering operations support, menu engineering, commercial kitchen design, culinary recruitment, and beverage, POS and marketing services for quick-service through fine-dining establishments.',
-    services: [S.RC, S.DTD],
     certifications: [], rb: '56',
   },
   {

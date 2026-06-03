@@ -464,22 +464,6 @@ on conflict (slug) do update set
   services = excluded.services, certifications = excluded.certifications,
   ranking_breakdown = excluded.ranking_breakdown;
 
--- Old Fashioned Restaurants
-insert into public.companies (name, slug, description, website_url, phone, email, address, services, certifications, partners, is_featured, ranking_breakdown)
-values (
-  'Old Fashioned Restaurants', 'ofr-concepts', 'Old Fashioned Restaurants (OFR Concepts) is a Toronto hospitality consulting firm founded in 2014. It helps restaurateurs open and operate profitable businesses through concept design, pre-construction project management, kitchen and equipment layout, equipment sourcing, menu engineering and operational audits.',
-  'https://www.ofrconcepts.ca', '(416) 677-1281', NULL,
-  '{"street":"19 Barberry Place","city":"Toronto","province":"Ontario","postal_code":"M2K 3E3"}'::jsonb,
-  ARRAY['Restaurant Consulting', 'Design & Technical Drawings', 'Equipment Consulting', 'Commercial Equipment Procurement']::text[],
-  '{}'::text[],
-  '[]'::jsonb, false, '{"service_range":6.5,"customer_reviews":6,"industry_experience":6.5,"response_time":6,"pricing_transparency":5.5,"certifications":5.5}'::jsonb
-)
-on conflict (slug) do update set
-  name = excluded.name, description = excluded.description, website_url = excluded.website_url,
-  phone = excluded.phone, email = excluded.email, address = excluded.address,
-  services = excluded.services, certifications = excluded.certifications,
-  ranking_breakdown = excluded.ranking_breakdown;
-
 -- Enterprise Restaurant Consulting
 insert into public.companies (name, slug, description, website_url, phone, email, address, services, certifications, partners, is_featured, ranking_breakdown)
 values (
@@ -656,22 +640,6 @@ on conflict (slug) do update set
   services = excluded.services, certifications = excluded.certifications,
   ranking_breakdown = excluded.ranking_breakdown;
 
--- Toronto Restaurant Consultants
-insert into public.companies (name, slug, description, website_url, phone, email, address, services, certifications, partners, is_featured, ranking_breakdown)
-values (
-  'Toronto Restaurant Consultants', 'toronto-restaurant-consultants', 'Toronto Restaurant Consultants is a Toronto restaurant consulting firm offering operations support, menu engineering, commercial kitchen design, culinary recruitment, and beverage, POS and marketing services for quick-service through fine-dining establishments.',
-  'https://www.restaurantconsultant.ca', NULL, NULL,
-  '{"street":null,"city":"Toronto","province":"Ontario","postal_code":null}'::jsonb,
-  ARRAY['Restaurant Consulting', 'Design & Technical Drawings']::text[],
-  '{}'::text[],
-  '[]'::jsonb, false, '{"service_range":6,"customer_reviews":5.5,"industry_experience":6,"response_time":5.5,"pricing_transparency":5.5,"certifications":5}'::jsonb
-)
-on conflict (slug) do update set
-  name = excluded.name, description = excluded.description, website_url = excluded.website_url,
-  phone = excluded.phone, email = excluded.email, address = excluded.address,
-  services = excluded.services, certifications = excluded.certifications,
-  ranking_breakdown = excluded.ranking_breakdown;
-
 -- Fried Sage Hospitality
 insert into public.companies (name, slug, description, website_url, phone, email, address, services, certifications, partners, is_featured, ranking_breakdown)
 values (
@@ -726,7 +694,7 @@ update public.companies set faq = jsonb_build_array(
     'answer', name || ' is based in ' || coalesce((address->>'street') || ', ', '') || (address->>'city') || ', ' || (address->>'province') || ', Canada.'),
   jsonb_build_object('question', 'What services does ' || name || ' offer for commercial kitchens?',
     'answer', name || ' offers ' || array_to_string(services, ', ') || '.')
-) where slug in ('tfi-food-equipment', 'united-trimen', 'doyon-despres', 'hesco-foodservice', 'hubert-canada', 'econolease', 'bouthillette-parizeau', 'browne-foodservice', 'celco', 'bakemax', 'kaizen-foodservice', 'paragon-food-equipment', 'gbs-foodservice', 'fsstrategy', 'newcap-leasing', 'babak-food-equipment', 'adl-fournisseur-commercial', 'jfs-restaurant-equipment', 'krg-hospitality', 'brama', 'foundry-kitchens', 'proxpedite', 'continental-restaurant-equipment', 'mehmi-financial-group', 'mck-equipment', 'canadian-restaurant-supply', 'commercial-kitchen-build', 'kaf-bar-supplies', 'ofr-concepts', 'enterprise-restaurant-consulting', 'fincap-financial-group', 'zanduco', 'the-cooks-mate', 'ifoodequipment', 'ontario-restaurant-supply', 'a1-cash-and-carry', 'franchise-360', 'mp-hvac', 'apex-electric-mechanical', 'avondale-commercial-solutions', 'toronto-restaurant-consultants', 'fried-sage-hospitality', 'mb-food-equipment', 'kitchen-treasure');
+) where slug in ('tfi-food-equipment', 'united-trimen', 'doyon-despres', 'hesco-foodservice', 'hubert-canada', 'econolease', 'bouthillette-parizeau', 'browne-foodservice', 'celco', 'bakemax', 'kaizen-foodservice', 'paragon-food-equipment', 'gbs-foodservice', 'fsstrategy', 'newcap-leasing', 'babak-food-equipment', 'adl-fournisseur-commercial', 'jfs-restaurant-equipment', 'krg-hospitality', 'brama', 'foundry-kitchens', 'proxpedite', 'continental-restaurant-equipment', 'mehmi-financial-group', 'mck-equipment', 'canadian-restaurant-supply', 'commercial-kitchen-build', 'kaf-bar-supplies', 'enterprise-restaurant-consulting', 'fincap-financial-group', 'zanduco', 'the-cooks-mate', 'ifoodequipment', 'ontario-restaurant-supply', 'a1-cash-and-carry', 'franchise-360', 'mp-hvac', 'apex-electric-mechanical', 'avondale-commercial-solutions', 'fried-sage-hospitality', 'mb-food-equipment', 'kitchen-treasure');
 
 -- Self-hosted brand logos (files live under public/logos/).
 update public.companies set logo_url = '/logos/tfi-food-equipment.png' where slug = 'tfi-food-equipment';
