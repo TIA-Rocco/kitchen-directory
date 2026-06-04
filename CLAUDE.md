@@ -242,6 +242,8 @@ Non-blocking items from the 2026-06-01 audit. All four launch-blockers (SEC-01/0
 
 4. **SEC-10 (low) — Logo upload magic-byte check** in `src/pages/api/list-company.ts`: sniff PNG (`89 50 4E 47`) / JPEG (`FF D8 FF`) before upload rather than trusting the client-declared MIME; keep the existing size + SVG-exclusion checks.
 
+**Done (PR #39, 2026-06-04) — Edge Function open-relay guard.** `send-transactional-email` only enforced the `x-edge-secret` header when `EDGE_SHARED_SECRET` was set; if unset it accepted any request (open email relay). Now refuses (`shared_secret_not_configured`) when the secret is unset **on a hosted deploy** (`DENO_DEPLOYMENT_ID` present), while still allowing local `supabase functions serve`. (Recovered from an uncommitted edit in a stale Conductor workspace during branch cleanup; the other 3 edits there — open-redirect guard, SVG logo removal, PNG/JPG copy — were already on main.) **Follow-up:** edge functions don't deploy via git — this takes effect only on the next `supabase functions deploy send-transactional-email`, and after that the hosted function refuses all calls until `EDGE_SHARED_SECRET` is set, so **set that secret before/with the deploy** (relevant when wiring up Mailgun for SEC-05).
+
 Informational (no action): GraphQL anon/authenticated table-exposure advisors are *metadata discoverability* only — row data is RLS-protected (verified live). `auth_leaked_password_protection` advisor is N/A (magic-link only, no passwords).
 
 ## What Was Built (Session: 2026-06-03, PR #24 — Playwright E2E + a11y/font fixes)
