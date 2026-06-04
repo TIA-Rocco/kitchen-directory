@@ -2,10 +2,12 @@
 import Base from '../../layouts/Base.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
+import HeroImage from '../../components/HeroImage.astro';
 import { buildItemListSchema, buildFAQPageSchema } from '../../lib/schema';
 import type { FaqItem } from '../../lib/types';
 import { supabase } from '../../lib/supabase';
 import { buildReviewMap, averageRating } from '../../lib/reviews';
+import { heroSrcset } from '../../lib/heroImage';
 
 export async function getStaticPaths() {
   const { data: services } = await supabase
@@ -117,18 +119,17 @@ const jsonLd: Record<string, unknown>[] = [
   title={`${serviceName} - Commercial Kitchen Equipment Suppliers`}
   description={`Compare top-rated ${serviceName.toLowerCase()} suppliers for commercial kitchens in Canada. Independent rankings and verified reviews.`}
   jsonLd={jsonLd}
+  heroPreload={{ srcset: heroSrcset(slug as string, 'services/') }}
 >
   <Header />
 
   <main>
     <section class="relative isolate overflow-hidden bg-neutral-950 py-20">
-      <img
-        src={`/heroes/services/${slug}.jpg`}
-        alt=""
-        aria-hidden="true"
-        fetchpriority="high"
+      <HeroImage
+        base={slug as string}
+        dir="services/"
+        position={heroPosition}
         class="absolute inset-0 -z-10 size-full object-cover"
-        style={`object-position: ${heroPosition};`}
       />
       <div
         class="absolute inset-0 -z-10 bg-gradient-to-r from-neutral-950 via-neutral-950/75 to-neutral-950/25"
@@ -185,7 +186,7 @@ const jsonLd: Record<string, unknown>[] = [
                       <div class="flex items-start gap-3 sm:gap-4">
                         <div class="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white ring-1 ring-black/5 text-lg font-semibold text-neutral-400">
                           {company.logo_url ? (
-                            <img src={company.logo_url} alt={`${company.name} logo`} class="size-full object-contain p-1.5" loading="lazy" />
+                            <img src={company.logo_url} alt={`${company.name} logo`} width="48" height="48" loading="lazy" decoding="async" class="size-full object-contain p-1.5" />
                           ) : (
                             company.name.charAt(0)
                           )}

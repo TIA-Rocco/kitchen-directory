@@ -3,7 +3,9 @@ import Base from '../layouts/Base.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import ServiceIcon from '../components/ServiceIcon.astro';
+import HeroImage from '../components/HeroImage.astro';
 import { buildWebSiteSchema, buildOrganizationSchema, buildItemListSchema } from '../lib/schema';
+import { heroSrcset } from '../lib/heroImage';
 import { supabase } from '../lib/supabase';
 
 // Fetch active companies from Supabase, sorted by ranking.
@@ -68,18 +70,17 @@ const jsonLd = [
   title="Find Commercial Kitchen Equipment Suppliers in Canada"
   description="Compare top-rated commercial kitchen equipment suppliers across Canada. Independent rankings, verified reviews, and service comparisons."
   jsonLd={jsonLd}
+  heroPreload={{ srcset: heroSrcset('home') }}
 >
   <Header />
 
   <main>
     <!-- Hero: headline + subcopy over the bright kitchen-team photograph. -->
     <section class="relative isolate overflow-hidden bg-neutral-950">
-      <img
-        src="/heroes/home.jpg"
-        alt=""
-        aria-hidden="true"
-        fetchpriority="high"
-        class="absolute inset-0 -z-10 size-full object-cover object-[center_35%]"
+      <HeroImage
+        base="home"
+        position="center 35%"
+        class="absolute inset-0 -z-10 size-full object-cover"
       />
       <!-- Scrim: keeps the white text legible while the right side stays bright and airy. -->
       <div
@@ -175,7 +176,7 @@ const jsonLd = [
 
                 <div class="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white ring-1 ring-black/5 text-lg font-semibold text-neutral-400">
                   {company.logo_url ? (
-                    <img src={company.logo_url} alt={`${company.name} logo`} class="size-full object-contain p-1.5" loading="lazy" />
+                    <img src={company.logo_url} alt={`${company.name} logo`} width="48" height="48" loading="lazy" decoding="async" class="size-full object-contain p-1.5" />
                   ) : (
                     company.name.charAt(0)
                   )}
