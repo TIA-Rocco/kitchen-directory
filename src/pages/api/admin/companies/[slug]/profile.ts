@@ -2,13 +2,16 @@ export const prerender = false;
 
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../../../../lib/supabase-server';
+import { requireAdmin } from '../../../../../lib/admin-auth';
 import { normalizeCertifications, normalizeGoogleRating, GOOGLE_RATING_KEYS } from '../../../../../lib/validation';
 
 // Update editable company fields. NOT slug (immutable — public URL + Schema.org
 // @id), NOT ranking (own endpoint), NOT deleted_at (delete endpoint).
 export const POST: APIRoute = async ({ params, request, locals }) => {
   const { slug } = params;
-  if (!slug || !locals.user) return json({ error: 'unauthorized' }, 401);
+  const auth = requireAdmin(locals);
+  if (auth instanceof Response) return auth;
+  if (!slug) return json({ error: 'missing slug' }, 400);
 
   let body: Record<string, any> = {};
   try { body = await request.json(); } catch { return json({ error: 'invalid json' }, 400); }

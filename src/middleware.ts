@@ -1,5 +1,6 @@
 import { defineMiddleware } from 'astro:middleware';
 import { createSupabaseServerClient } from './lib/supabase-server';
+import { isAdminEmail } from './lib/admin-auth';
 
 const PUBLIC_ADMIN_PATHS = new Set(['/admin/login', '/admin/auth/callback', '/api/admin/login']);
 
@@ -26,14 +27,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return context.redirect('/admin/login?next=' + encodeURIComponent(path));
   }
 
-  const adminEmails = (import.meta.env.ADMIN_EMAILS || '')
-    .toLowerCase()
-    .split(',')
-    .map((s: string) => s.trim())
-    .filter(Boolean);
-
-  const userEmail = (user.email ?? '').toLowerCase();
-  if (!adminEmails.includes(userEmail)) {
+  if (!isAdminEmail(user.email)) {
     if (isAdminApi) {
       return new Response(JSON.stringify({ error: 'forbidden' }), {
         status: 403,

@@ -2,13 +2,13 @@ export const prerender = false;
 
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../../../../lib/supabase-server';
+import { requireAdmin } from '../../../../../lib/admin-auth';
 
 export const POST: APIRoute = async ({ params, locals }) => {
   const { id } = params;
-  const user = locals.user;
-  if (!id || !user) {
-    return json({ error: 'unauthorized' }, 401);
-  }
+  const user = requireAdmin(locals);
+  if (user instanceof Response) return user;
+  if (!id) return json({ error: 'missing id' }, 400);
 
   // Single atomic + idempotent DB function: creates the company (only if not
   // already promoted), flips status to approved, and writes audit cols in one
