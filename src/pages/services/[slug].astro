@@ -56,6 +56,17 @@ export async function getStaticPaths() {
 const { slug } = Astro.params;
 const { serviceName, description, faq, companies } = Astro.props;
 
+// Per-banner vertical crop anchor for the hero photo. Most banners center
+// cleanly; a few have the subject sitting low in frame, so we nudge the
+// visible window downward (higher %) to raise the subject. Defaults to center.
+const HERO_POSITION: Record<string, string> = {
+  'commercial-equipment-procurement': 'center 28%',
+  'design-and-technical-drawings': 'center 72%',
+  'equipment-financing': 'center 75%',
+  'price-match': 'center 20%',
+};
+const heroPosition = HERO_POSITION[slug] ?? 'center';
+
 // ItemList here is CATEGORY-SPECIFIC: only the companies filtered for this
 // service, scoped to the category URL. (The global homepage ItemList lives on /.)
 const itemListSchema = buildItemListSchema(
@@ -116,7 +127,8 @@ const jsonLd: Record<string, unknown>[] = [
         alt=""
         aria-hidden="true"
         fetchpriority="high"
-        class="absolute inset-0 -z-10 size-full object-cover object-center"
+        class="absolute inset-0 -z-10 size-full object-cover"
+        style={`object-position: ${heroPosition};`}
       />
       <div
         class="absolute inset-0 -z-10 bg-gradient-to-r from-neutral-950 via-neutral-950/75 to-neutral-950/25"
