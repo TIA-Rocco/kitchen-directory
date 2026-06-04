@@ -445,3 +445,18 @@ Three client requests from the latest review session: mobile hamburger on the pa
 - **Admin review-removal UI not live-QA'd** (magic-link auth-gated) — verified via build + unit tests + endpoint gating + the migration check on prod. The authenticated flow mirrors the existing approve/reject/reopen handlers on the same page.
 - "Remove" is a **permanent hard delete** by design. If a reversible un-publish is ever wanted, the migration's `trg_review_unpublished` already covers the approved→rejected rebuild — just re-enable Reject on approved reviews in the detail page.
 - P3 (accepted, pre-existing posture): an approved-review removal fires one deploy hook; if combined with other admin actions it can mean an extra harmless rebuild — same as the rest of the moderation pipeline.
+
+## What Was Built (Session: 2026-06-04, PR #57 — requireAdmin() defense-in-depth across admin API)
+Follow-up hardening from the **automated security review** of PR #55's `reviews/[id]/delete.ts` (flagged "missing admin check"). The finding was *not exploitable* — `src/middleware.ts` gates all `/api/admin/*` and only populates `locals.user` **after** the `ADMIN_EMAILS` allow-list check, so a handler checking `locals.user` was already secure. But every admin handler relied on that single middleware layer as its only gate, so this adds a second, per-handler layer. No DB/migration changes. Shipped via PR #57 (squash, merge commit `eec6890`), gate behavior re-verified on prod.
+
+1. **New `src/lib/admin-auth.ts`** — `isAdminEmail(email)` is now the single source of truth for the allow-list, and `requireAdmin(locals): User | Response` returns 401 (no user) / 403 (not allow-listed) or the admin `User`. `middleware.ts` was refactored to use `isAdminEmail()` so the allow-list parsing can't drift between the two layers.
+2. **All 14 `/api/admin/*` handlers** now call `requireAdmin(locals)` at the top (`const auth = requireAdmin(locals); if (auth instanceof Response) return auth;`) and re-verify the allow-list, instead of just checking `locals.user` truthiness. `approve`/`reject` (reviews + submissions) read the admin id for audit cols from the returned `User`. The unreachable missing-route-param case now returns 400 instead of 401 (semantic cleanup; route params are always present).
+3. **10 new unit tests** (`src/lib/__tests__/admin-auth.test.ts`, using `vi.stubEnv('ADMIN_EMAILS', …)`) covering `getAdminEmails`/`isAdminEmail`/`requireAdmin`, including the defense-in-depth case (an authenticated user is 403'd once the allow-list excludes them). 113 tests total.
+
+### Verification
+- 113/113 unit tests; full `astro build` clean; `astro check` adds **zero** new errors (only the 5 pre-existing `redirect`-typing ones). One new error introduced mid-build (`import.meta.env.ADMIN_EMAILS` infers loosely → implicit-any on `.map`) was fixed by annotating `(s: string)`, matching the original middleware.
+- Live dev-server gate check (public 200 / `/admin` 302→login / admin API 403), then **post-deploy prod re-check**: `/` → 200, `POST /api/admin/reviews/<id>/delete` unauthenticated → 403, `/admin/companies` → 302→login.
+
+### Known / follow-ups
+- This closes the automated-review finding. The remaining items in the security backlog above (SEC-04 headers, SEC-05 rate-limit/Turnstile on `/api/review` + `/api/contact`, SEC-08/09 Postgres `search_path`, SEC-10 logo magic-byte) are unchanged.
+- `requireAdmin` is the canonical gate for any **future** admin endpoint — use it instead of a bare `locals.user` check.
