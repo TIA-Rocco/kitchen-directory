@@ -151,6 +151,21 @@ const statusStyles: Record<string, string> = {
               Reopen to pending
             </button>
           )}
+
+          <!-- Remove (permanent hard delete) — available for any status; the
+               primary way to take an already-approved review off the live site. -->
+          <div class="mt-2 border-t border-neutral-100 pt-3">
+            <button
+              type="button"
+              data-action="delete"
+              class="w-full rounded-md border border-red-200 bg-white px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
+            >
+              Remove review
+            </button>
+            <p class="mt-2 text-xs text-neutral-500">
+              Permanently deletes this review. This can't be undone.{review.status === 'approved' ? ' The site rebuilds to drop it.' : ''}
+            </p>
+          </div>
         </div>
         {review.status === 'approved' && (
           <p class="mt-3 text-xs text-neutral-500">
@@ -213,6 +228,8 @@ const statusStyles: Record<string, string> = {
             reason = prompt('Reason for rejection (saved to internal notes, optional):')?.trim() ?? '';
           } else if (action === 'reopen') {
             if (!confirm('Reopen this review to pending?')) return;
+          } else if (action === 'delete') {
+            if (!confirm('Permanently remove this review? This cannot be undone.')) return;
           }
 
           btn.disabled = true;
@@ -240,6 +257,10 @@ const statusStyles: Record<string, string> = {
             } else if (action === 'reopen') {
               toast('Reopened to pending.');
               setTimeout(() => window.location.reload(), 800);
+            } else if (action === 'delete') {
+              disable();
+              toast('Review removed.');
+              setTimeout(() => (window.location.href = '/admin/reviews'), 1200);
             }
           } catch (err) {
             console.error(err);

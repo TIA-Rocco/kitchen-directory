@@ -2,6 +2,7 @@
 export const prerender = false;
 
 import Base from '../layouts/Base.astro';
+import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 
 const status = Astro.url.searchParams.get('status');
@@ -12,14 +13,7 @@ const ok = status === 'ok';
   title={ok ? 'Submission Verified' : 'Verification Issue'}
   description="Verify your supplier submission to Kitchen Equipment Canada."
 >
-  <header class="border-b border-neutral-950/5 bg-white">
-    <nav class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-      <a href="/" aria-label="Homepage" class="flex items-center gap-2">
-        <img src="https://assets.ui.sh/marks/1.svg?color=emerald-600&text=KE&textColor=neutral-900&font=inter" alt="Kitchen Equipment Canada" class="h-8" />
-        <span class="text-lg font-semibold tracking-tight">KitchenEquipment.ca</span>
-      </a>
-    </nav>
-  </header>
+  <Header />
 
   <main class="flex min-h-[60vh] items-center justify-center px-6 py-16">
     <div class="max-w-lg text-center">
