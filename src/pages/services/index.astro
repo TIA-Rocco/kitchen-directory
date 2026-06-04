@@ -105,10 +105,21 @@ const jsonLd = [servicesItemList, suppliersItemList, breadcrumbSchema];
     </div>
 
     <!-- Hero -->
-    <section class="bg-neutral-950 py-16">
+    <section class="relative isolate overflow-hidden bg-neutral-950 py-16">
+      <img
+        src="/heroes/home.jpg"
+        alt=""
+        aria-hidden="true"
+        fetchpriority="high"
+        class="absolute inset-0 -z-10 size-full object-cover object-[center_35%]"
+      />
+      <div
+        class="absolute inset-0 -z-10 bg-gradient-to-r from-neutral-950 via-neutral-950/75 to-neutral-950/25"
+        aria-hidden="true"
+      ></div>
       <div class="mx-auto max-w-7xl px-6">
         <h1 class="max-w-[24ch] text-5xl font-semibold tracking-tight text-balance text-white">Services &amp; supplier directory</h1>
-        <p class="mt-6 max-w-[56ch] text-lg text-pretty text-neutral-400">
+        <p class="mt-6 max-w-[56ch] text-lg text-pretty text-neutral-200">
           Browse every service commercial kitchen equipment suppliers offer, then compare all {companies.length} ranked suppliers in Canada — scored on service range, reviews, experience, and more.
         </p>
       </div>
