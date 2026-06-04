@@ -10,6 +10,12 @@ interface Props {
   canonicalUrl?: string;
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
   /**
+   * Emit <meta name="robots" content="noindex, nofollow"> to keep this page out
+   * of search-engine and AI indexes while it remains reachable by direct URL.
+   * Used to temporarily hide the blog pending content-team review.
+   */
+  noindex?: boolean;
+  /**
    * Responsive preload for the LCP hero image (AVIF). Pages with a full-bleed
    * hero (homepage, service categories) pass the AVIF srcset so the browser
    * starts fetching the LCP image during head parse instead of after layout —
@@ -19,7 +25,7 @@ interface Props {
   heroPreload?: { srcset: string; sizes?: string };
 }
 
-const { title, description, ogImage, canonicalUrl, jsonLd, heroPreload } = Astro.props;
+const { title, description, ogImage, canonicalUrl, jsonLd, noindex, heroPreload } = Astro.props;
 const canonical = canonicalUrl || Astro.url.href;
 const siteName = 'Kitchen Equipment Canada';
 const resolvedOgImage = new URL(ogImage ?? '/og-image.png', canonical).href;
@@ -33,6 +39,7 @@ const ogImageAlt = `${siteName}: ${title}`;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title} | {siteName}</title>
     <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
     <link rel="canonical" href={canonical} />
 
     <!-- Open Graph -->

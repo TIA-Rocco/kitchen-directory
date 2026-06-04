@@ -13,7 +13,14 @@ export default defineConfig({
   adapter: vercel({
     imageService: true,
   }),
-  integrations: [sitemap()],
+  integrations: [
+    sitemap({
+      // Blog is temporarily hidden (noindexed + unlinked) pending content-team
+      // review — keep its URLs out of the sitemap so they aren't surfaced to
+      // crawlers and don't conflict with the noindex directive.
+      filter: (page) => !/\/blog(\/|$)/.test(page),
+    }),
+  ],
   image: {
     domains: ['your-supabase-project.supabase.co'],
   },
