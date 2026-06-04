@@ -16,13 +16,13 @@ const { data: navServicesRaw } = await supabase
 const navServices = navServicesRaw ?? [];
 ---
 
-<header class="border-b border-neutral-950/5 bg-white">
+<header class="relative border-b border-neutral-950/5 bg-white">
   <nav class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
     <a href="/" aria-label="Homepage" class="flex items-center gap-2">
       <img src="https://assets.ui.sh/marks/1.svg?color=emerald-600&text=KE&textColor=neutral-900&font=inter" alt="Kitchen Equipment Canada" class="h-8" />
       <span class="max-[400px]:hidden text-lg font-semibold tracking-tight">KitchenEquipment.ca</span>
     </a>
-    <div class="flex items-center gap-6">
+    <div class="flex items-center gap-3 sm:gap-6">
       <!-- Services dropdown (desktop/tablet; matches the max-sm:hidden nav links). -->
       <div class="relative max-sm:hidden" data-services-menu>
         <button
@@ -75,9 +75,106 @@ const navServices = navServicesRaw ?? [];
       <a href="/submit-review" class="max-sm:hidden text-sm font-medium text-neutral-600 hover:text-neutral-900">Submit a Review</a>
       <a href="/list-your-company" class="max-sm:hidden text-sm font-medium text-neutral-600 hover:text-neutral-900">List your company</a>
       <a href="/contact" class="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600">Contact Us</a>
+
+      <!-- Mobile hamburger (sm:hidden; toggles the dropdown panel below). -->
+      <button
+        type="button"
+        class="-mr-2 inline-flex size-10 items-center justify-center rounded-md text-neutral-700 hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 sm:hidden"
+        aria-label="Open menu"
+        aria-haspopup="true"
+        aria-expanded="false"
+        aria-controls="mobile-menu-panel"
+        data-mobile-trigger
+      >
+        <span class="sr-only">Menu</span>
+        <span class="relative block h-4 w-5" aria-hidden="true">
+          <span class="absolute left-0 top-0 block h-0.5 w-5 rounded-full bg-current" data-bar="top"></span>
+          <span class="absolute left-0 top-[7px] block h-0.5 w-5 rounded-full bg-current" data-bar="middle"></span>
+          <span class="absolute bottom-0 left-0 block h-0.5 w-5 rounded-full bg-current" data-bar="bottom"></span>
+        </span>
+      </button>
     </div>
   </nav>
+
+  <!-- Mobile dropdown panel (sm:hidden; opened by the hamburger above). -->
+  <div
+    id="mobile-menu-panel"
+    data-mobile-panel
+    class="absolute inset-x-0 top-full z-50 hidden origin-top -translate-y-1 border-b border-neutral-200 bg-white opacity-0 shadow-[0_12px_40px_rgba(0,0,0,0.12)] transition duration-200 ease-out sm:hidden"
+  >
+    <div class="mx-auto max-h-[calc(100dvh-5rem)] max-w-7xl overflow-y-auto px-4 py-3">
+      <!-- Services: expandable accordion mirroring the desktop dropdown. -->
+      <div>
+        <button
+          type="button"
+          class="flex w-full items-center justify-between rounded-lg px-3 py-3 text-base font-medium text-neutral-800 hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+          aria-expanded="false"
+          aria-controls="mobile-services-list"
+          data-mobile-services-trigger
+        >
+          Services
+          <svg class="size-5 text-neutral-400 transition-transform duration-200" data-mobile-services-chevron fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+          </svg>
+        </button>
+        <div
+          id="mobile-services-list"
+          data-mobile-services-list
+          class="grid grid-rows-[0fr] transition-[grid-template-rows] duration-200 ease-out"
+          inert
+        >
+          <div class="overflow-hidden">
+            <ul class="space-y-0.5 py-1 pl-1">
+              {navServices.map((s) => (
+                <li>
+                  <a
+                    href={`/services/${s.slug}`}
+                    class="group/mi flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-neutral-50 focus-visible:bg-neutral-50 focus-visible:outline-none"
+                  >
+                    <span class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 transition-colors group-hover/mi:bg-emerald-600 group-hover/mi:text-white group-focus-visible/mi:bg-emerald-600 group-focus-visible/mi:text-white">
+                      <ServiceIcon slug={s.slug} class="size-[18px]" />
+                    </span>
+                    <span class="text-sm font-medium text-neutral-700 group-hover/mi:text-neutral-900">{s.name}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <div class="px-3 pb-2 pt-1">
+              <a href="/services" class="inline-flex items-center gap-1 text-sm font-medium text-emerald-600 hover:text-emerald-700">
+                Browse all services
+                <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="my-1 border-t border-neutral-100"></div>
+
+      <a href="/blog" class="block rounded-lg px-3 py-3 text-base font-medium text-neutral-800 hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600">Blog</a>
+      <a href="/submit-review" class="block rounded-lg px-3 py-3 text-base font-medium text-neutral-800 hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600">Submit a Review</a>
+      <a href="/list-your-company" class="block rounded-lg px-3 py-3 text-base font-medium text-neutral-800 hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600">List your company</a>
+    </div>
+  </div>
 </header>
+
+<style>
+  /* Hamburger → X morph, driven purely by the trigger's aria-expanded state. */
+  [data-bar] {
+    transition:
+      transform 0.2s ease-out,
+      opacity 0.2s ease-out;
+  }
+  [data-mobile-trigger][aria-expanded='true'] [data-bar='top'] {
+    transform: translateY(7px) rotate(45deg);
+  }
+  [data-mobile-trigger][aria-expanded='true'] [data-bar='middle'] {
+    opacity: 0;
+  }
+  [data-mobile-trigger][aria-expanded='true'] [data-bar='bottom'] {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+</style>
 
 <script>
   function initServicesMenus() {
@@ -147,6 +244,96 @@ const navServices = navServicesRaw ?? [];
     });
   }
 
+  function initMobileMenu() {
+    const trigger = document.querySelector('[data-mobile-trigger]') as HTMLElement | null;
+    const panel = document.querySelector('[data-mobile-panel]') as HTMLElement | null;
+    if (!trigger || !panel) return;
+    if (trigger.dataset.bound) return;
+    trigger.dataset.bound = 'true';
+
+    let open = false;
+    let closeTimer: ReturnType<typeof setTimeout> | undefined;
+
+    // Services accordion nested inside the panel.
+    const accTrigger = panel.querySelector('[data-mobile-services-trigger]') as HTMLElement | null;
+    const accList = panel.querySelector('[data-mobile-services-list]') as HTMLElement | null;
+    const accChevron = panel.querySelector('[data-mobile-services-chevron]');
+    let accOpen = false;
+
+    const setAccOpen = (next: boolean) => {
+      accOpen = next;
+      accTrigger?.setAttribute('aria-expanded', String(next));
+      accChevron?.classList.toggle('rotate-180', next);
+      if (accList) {
+        accList.classList.toggle('grid-rows-[1fr]', next);
+        accList.classList.toggle('grid-rows-[0fr]', !next);
+        // Keep collapsed links out of the tab order / a11y tree.
+        if (next) accList.removeAttribute('inert');
+        else accList.setAttribute('inert', '');
+      }
+    };
+
+    const setOpen = (next: boolean) => {
+      if (next === open) return;
+      open = next;
+      trigger.setAttribute('aria-expanded', String(next));
+      trigger.setAttribute('aria-label', next ? 'Close menu' : 'Open menu');
+
+      if (next) {
+        clearTimeout(closeTimer);
+        panel.classList.remove('hidden');
+        // Register the hidden->shown transition start before fading in.
+        requestAnimationFrame(() => {
+          panel.classList.remove('opacity-0', '-translate-y-1');
+          panel.classList.add('opacity-100', 'translate-y-0');
+        });
+      } else {
+        panel.classList.add('opacity-0', '-translate-y-1');
+        panel.classList.remove('opacity-100', 'translate-y-0');
+        // Hide after the fade so links leave the tab order when closed.
+        closeTimer = setTimeout(() => panel.classList.add('hidden'), 200);
+        setAccOpen(false);
+      }
+    };
+
+    trigger.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setOpen(!open);
+    });
+
+    accTrigger?.addEventListener('click', (e) => {
+      e.preventDefault();
+      setAccOpen(!accOpen);
+    });
+
+    // Tapping any link closes the menu (so it's gone after navigation).
+    panel.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => setOpen(false)));
+
+    // Escape closes and returns focus to the trigger.
+    document.addEventListener('keydown', (e) => {
+      if ((e as KeyboardEvent).key === 'Escape' && open) {
+        setOpen(false);
+        trigger.focus();
+      }
+    });
+
+    // Click outside the panel + trigger closes it.
+    document.addEventListener('click', (e) => {
+      const target = e.target as Node;
+      if (open && !panel.contains(target) && !trigger.contains(target)) setOpen(false);
+    });
+
+    // Crossing up to the desktop breakpoint resets the menu.
+    window.matchMedia('(min-width: 640px)').addEventListener('change', (ev) => {
+      if (ev.matches) setOpen(false);
+    });
+  }
+
   initServicesMenus();
-  document.addEventListener('astro:page-load', initServicesMenus);
+  initMobileMenu();
+  document.addEventListener('astro:page-load', () => {
+    initServicesMenus();
+    initMobileMenu();
+  });
 </script>
