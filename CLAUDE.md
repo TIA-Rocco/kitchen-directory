@@ -414,3 +414,15 @@ Image-weight optimization to lift mobile PageSpeed across the homepage, `/servic
 - **Source heroes** (`public/heroes/*.jpg` + `services/*.jpg`) stay in the repo as the optimizer's source-of-truth; they're no longer referenced by any page (only the `opt/` variants are) but are still deployed. To swap a banner: replace the source JPG, re-run `node scripts/optimize-images.cjs --force`, rebuild.
 - **Adding a new company** still drops its logo at `public/logos/<slug>.png` — run the optimizer (or `--logos-only`) before committing so it's resized/recompressed like the rest. **Adding a new service** needs a matching `public/heroes/services/<slug>.jpg` + an optimizer run, or the `<picture>` 404s on that page's hero.
 - The `astro.config.mjs` `image.domains` placeholder (`your-supabase-project.supabase.co`) is inert (no remote `astro:assets` usage) — left as-is.
+
+## What Was Built (Session: 2026-06-04, PR #53 — review CTA deep-link)
+Tiny UX fix: the two **"Write a Review"** CTAs on `/companies/[slug]` (Customer Reviews header + contact sidebar) pointed at a bare `/submit-review`, forcing the user to re-pick the company they were just viewing. They now deep-link with the slug. No DB/migration changes. Shipped via PR #53 (squash, merge commit `0946f98`), confirmed live on the prod alias.
+
+1. **Deep-link the CTAs (`src/pages/companies/[slug].astro`, 2 lines).** `href="/submit-review"` → `` href={`/submit-review?company=${company.slug}`} `` on both "Write a Review" links. The submit-review page **already** had the reader (`submit-review.astro:130-138`): it reads `?company=` and matches it against each `<option data-slug=…>`, then sets the select value. The company pages just weren't passing the param, so this was a 2-line change, not new infrastructure. The global-nav "Submit a Review" link in `Header.astro` stays bare (correct — it's not company-specific). `company.slug` is typed `string` on `Company`; same `` href={`…${…}`} `` pattern used throughout.
+
+### Verification
+- Reader proven live on prod: `/submit-review?company=shop-at-stop` preselects "Shop at Stop Restaurant Supply" (option value = its UUID), verified via agent-browser eval pre-merge.
+- Post-deploy: `curl` of prod `/companies/shop-at-stop` confirms both CTAs emit `href="/submit-review?company=shop-at-stop"` (SSG source of truth); deploy landed ~10s after merge. Owner also manually confirmed the click-through works.
+
+### Known / follow-ups
+- **agent-browser post-merge QA was flaky this session** — the shared agent-browser daemon got hijacked by a concurrent local browser session (tab drifted to `localhost:4321` + random `/blog` pages, clicks missed, console showed stale cross-origin logs). Root cause: the local Stop-hook `.claude/hooks/e2e-on-large-change.sh` fires `npx playwright test e2e/public` against a running `npm run dev` after a large local change, racing the daemon. Not a site defect. Workaround: `agent-browser close --all` then re-open, run asserts in one `agent-browser batch`, or just `curl` the SSG HTML. Captured in the `reference_agent_browser_daemon_pollution` memory.
