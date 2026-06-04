@@ -15,8 +15,9 @@
 //     vars: Record<string, string>
 //   }
 //
-// Auth: optional `x-edge-secret` header validated against EDGE_SHARED_SECRET.
-//       If EDGE_SHARED_SECRET is unset, no auth is required (dev mode).
+// Auth: `x-edge-secret` header validated against EDGE_SHARED_SECRET. Mandatory on
+//       hosted deploys (DENO_DEPLOYMENT_ID set) — the function refuses if the
+//       secret is unset there. Only skippable on local `supabase functions serve`.
 //
 // Mailgun: if MAILGUN_API_KEY is unset, returns { ok: true, mocked: true } so
 // dev environments without Mailgun provisioned still work end-to-end.
@@ -33,6 +34,10 @@ const MAILGUN_FROM =
   `Kitchen Equipment Canada <postmaster@${MAILGUN_DOMAIN || 'kitchenequipment.ca'}>`;
 const EDGE_SHARED_SECRET = Deno.env.get('EDGE_SHARED_SECRET') || '';
 const SITE_URL = Deno.env.get('SITE_URL') || 'https://kitchen-directory.vercel.app';
+
+// Supabase hosted deploys set DENO_DEPLOYMENT_ID; `supabase functions serve` does
+// not. Used to require the shared secret in production while keeping local dev easy.
+const IS_HOSTED = Boolean(Deno.env.get('DENO_DEPLOYMENT_ID'));
 
 type TemplateName =
   | 'verification'
@@ -155,12 +160,16 @@ Deno.serve(async (req) => {
     return json(200, { ok: false, error: 'method_not_allowed' });
   }
 
-  // Optional shared-secret check
+  // Shared-secret check. Mandatory on hosted deploys to stop the endpoint from
+  // acting as an open email relay; only skippable on local `functions serve`.
   if (EDGE_SHARED_SECRET) {
     const provided = req.headers.get('x-edge-secret') || '';
     if (provided !== EDGE_SHARED_SECRET) {
       return json(200, { ok: false, error: 'unauthorized' });
     }
+  } else if (IS_HOSTED) {
+    console.error('[send-transactional-email] EDGE_SHARED_SECRET unset on hosted deploy — refusing.');
+    return json(200, { ok: false, error: 'shared_secret_not_configured' });
   }
 
   let body: RequestBody;
