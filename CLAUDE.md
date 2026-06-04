@@ -348,3 +348,19 @@ Replaced the text-only dark hero bands on the homepage + service pages with brig
 - **Source images are not in the repo** — they live on the Desktop. To swap a banner: regenerate (or edit), re-optimize with `sips`, drop into `public/heroes/...`, and (if needed) add/adjust the slug's `HERO_POSITION` entry.
 - **Higgsfield gotchas** (captured in the `project_hero_images` memory): never say "brand accent" (→ invented signage) — use "colour accent only" + explicit no-text/no-signage negatives so the site stays an independent directory; the API throws transient `502`/`504`, so wrap generations in a retry loop.
 - **Local real-data render** needs a gitignored `.env` (`PUBLIC_SUPABASE_URL` + `PUBLIC_SUPABASE_ANON_KEY`); fetch the public anon key via Supabase MCP `get_publishable_keys` (project `awksvtteuzrzwazqxxyi`). The 9 `/services/[slug]` pages only build when Supabase returns the category rows.
+
+## What Was Built (Session: 2026-06-04, PR #44 — mobile hamburger nav)
+Fixed a real mobile-nav gap: below the `sm` breakpoint the **entire** nav was hidden (`max-sm:hidden`), leaving only the logo + Contact Us — phone users had no way to reach Services, Blog, Submit a Review, or List your company. Single-file change to `src/components/Header.astro` (CSS/JS only, no DB/migration). Shipped via PR #44 (squash, merge commit `0a06d83`), post-merge prod QA verified live.
+
+1. **Hamburger toggle (`sm:hidden`)** added to the right of the persistent Contact Us CTA, with a 3-bar → X morph driven **purely by `aria-expanded`** (scoped `<style>`, no extra state class). Mobile gap tightened (`gap-3 sm:gap-6`); `header` given `relative` to anchor the panel.
+2. **Dropdown panel** (absolute, `top-full`, full-width, `sm:hidden`) containing a **Services accordion** that expands to all 9 categories (emerald icon tiles, mirroring the desktop dropdown) + "Browse all services →", then Blog / Submit a Review / List your company. Accordion uses a `grid-rows-[0fr]→[1fr]` height animation; `inert` toggles on the collapsed list so hidden links stay out of the tab order / a11y tree.
+3. **Behaviour + a11y.** New `initMobileMenu()` mirrors the existing `initServicesMenus()` pattern (idempotent `dataset.bound` guard, re-inits on `astro:page-load`): open/close toggle, `aria-expanded`/`aria-label` sync, Escape-to-close (returns focus to trigger), click-outside, close-on-link-click, and an auto-reset when crossing up to the `(min-width: 640px)` desktop breakpoint. Animations use easing + transform/opacity per the global animation defaults.
+4. **Desktop untouched.** The desktop nav and the existing hover/click Services dropdown are unchanged — verified by regression check.
+
+### Verification
+- Local dev-server QA in the worktree (`node_modules` symlinked from the primary checkout, `.env` copied from the sibling `feat-hero-images` worktree): agent-browser at **375×812** (hamburger → X, dropdown opens, accordion expands to 9 links, close-toggle, Escape) and **1280×800** (hamburger hidden, desktop nav + Services dropdown intact); `aria-expanded` / `inert` / `panel.hidden` state assertions all green; console clean.
+- **Post-merge agent-browser QA on the public prod alias** (`kitchen-directory.vercel.app`) at 1280×800 + 375×812 — hamburger morphs to X, the white dropdown overlays the new #43 photo hero cleanly, Services accordion renders all 9 categories, desktop hamburger hidden / nav intact, no console errors.
+
+### Known / follow-ups
+- The mobile Services accordion reuses the same build-time `service_categories` query as the desktop dropdown (no extra fetch) — it stays in sync with the DB automatically.
+- Same harmless caveat as the rest of the site: the worktree's symlinked `node_modules` + copied `.env` are gitignored / never staged (only `Header.astro` shipped).
