@@ -89,6 +89,73 @@ export function normalizeCertifications(input: unknown, max = 20): string[] {
   return out;
 }
 
+export interface GoogleRatingInput {
+  google_place_id: string | null;
+  google_rating: number | null;
+  google_review_count: number | null;
+  google_rating_as_of: string | null;
+  google_place_url: string | null;
+}
+
+export const GOOGLE_RATING_KEYS: readonly (keyof GoogleRatingInput)[] = [
+  'google_place_id',
+  'google_rating',
+  'google_review_count',
+  'google_rating_as_of',
+  'google_place_url',
+];
+
+function cleanGoogleText(v: unknown, max: number): string | null {
+  if (typeof v !== 'string') return null;
+  const t = v.trim().slice(0, max);
+  return t || null;
+}
+
+function cleanGoogleUrl(v: unknown): string | null {
+  if (typeof v !== 'string') return null;
+  const t = v.trim().slice(0, 500);
+  return /^https?:\/\//i.test(t) ? t : null;
+}
+
+function cleanGoogleRatingValue(v: unknown): number | null {
+  if (v === '' || v === null || v === undefined) return null;
+  const n = typeof v === 'number' ? v : parseFloat(String(v));
+  if (!Number.isFinite(n)) return null;
+  const clamped = Math.min(5, Math.max(0, n));
+  return Math.round(clamped * 10) / 10; // one decimal, matches numeric(2,1)
+}
+
+function cleanGoogleCount(v: unknown): number | null {
+  if (v === '' || v === null || v === undefined) return null;
+  const n = typeof v === 'number' ? v : parseInt(String(v), 10);
+  if (!Number.isFinite(n) || n < 0) return null;
+  return Math.floor(n);
+}
+
+function cleanGoogleDate(v: unknown): string | null {
+  if (typeof v !== 'string') return null;
+  const t = v.trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(t)) return null;
+  const d = new Date(`${t}T00:00:00Z`);
+  return Number.isNaN(d.getTime()) ? null : t;
+}
+
+/**
+ * Normalize the attributed Google rating fields from an admin form payload into
+ * a DB-ready object. Display-only data — never enters JSON-LD. Rating clamps to
+ * 0–5 (one decimal), count floors to a non-negative int, date must be
+ * YYYY-MM-DD, place URL must be http(s). Anything missing/invalid → null.
+ */
+export function normalizeGoogleRating(body: Record<string, unknown>): GoogleRatingInput {
+  return {
+    google_place_id: cleanGoogleText(body.google_place_id, 300),
+    google_rating: cleanGoogleRatingValue(body.google_rating),
+    google_review_count: cleanGoogleCount(body.google_review_count),
+    google_rating_as_of: cleanGoogleDate(body.google_rating_as_of),
+    google_place_url: cleanGoogleUrl(body.google_place_url),
+  };
+}
+
 export interface FaqPair {
   question: string;
   answer: string;

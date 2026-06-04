@@ -2,7 +2,7 @@ export const prerender = false;
 
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../../../../lib/supabase-server';
-import { normalizeCertifications } from '../../../../../lib/validation';
+import { normalizeCertifications, normalizeGoogleRating, GOOGLE_RATING_KEYS } from '../../../../../lib/validation';
 
 // Update editable company fields. NOT slug (immutable — public URL + Schema.org
 // @id), NOT ranking (own endpoint), NOT deleted_at (delete endpoint).
@@ -46,6 +46,13 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
 
   if (body.certifications !== undefined) {
     update.certifications = normalizeCertifications(body.certifications);
+  }
+
+  // Attributed Google rating fields (display-only; never enters JSON-LD). Applied
+  // as a group when the admin form sends any of them, so a bad match can be
+  // hand-corrected or the snapshot refreshed without re-running the script.
+  if (GOOGLE_RATING_KEYS.some((k) => k in body)) {
+    Object.assign(update, normalizeGoogleRating(body));
   }
 
   if (Array.isArray(body.faq)) {
