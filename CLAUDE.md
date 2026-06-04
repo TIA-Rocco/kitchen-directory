@@ -460,3 +460,21 @@ Follow-up hardening from the **automated security review** of PR #55's `reviews/
 ### Known / follow-ups
 - This closes the automated-review finding. The remaining items in the security backlog above (SEC-04 headers, SEC-05 rate-limit/Turnstile on `/api/review` + `/api/contact`, SEC-08/09 Postgres `search_path`, SEC-10 logo magic-byte) are unchanged.
 - `requireAdmin` is the canonical gate for any **future** admin endpoint — use it instead of a bare `locals.user` check.
+
+## What Was Built (Session: 2026-06-04, PR #59 — temporarily hide the blog)
+Content team wants to review the blog posts manually before they're shared, so the blog was temporarily hidden **without deleting anything**. The pages stay live at their URLs (so the team can review the rendered articles directly) but are unlinked, noindexed, and excluded from the sitemap. Markup/config only — no DB/migration changes. Shipped via PR #59 (squash, merge commit `62d5221`), post-deploy QA confirmed live.
+
+1. **Removed Blog from nav (`src/components/Header.astro`).** Both `Blog` `<a>` links deleted — desktop nav **and** mobile hamburger dropdown — replaced with an explanatory HTML comment. (Nav is the shared `<Header />` only — see the PR #55 entry; do not re-add per-page inline nav.)
+2. **No-indexed the blog pages.** `src/layouts/Base.astro` gained an optional `noindex?: boolean` prop that emits `<meta name="robots" content="noindex, nofollow">`. `/blog` index (`blog/index.astro`) and every post (`blog/[slug].astro`) pass `noindex`. The pages stay reachable by direct URL by design (content-team review); `noindex` is the per-page authoritative de-index signal (robots.txt left untouched — a `Disallow` would block crawling but not guarantee de-indexing).
+3. **Dropped /blog from the sitemap (`astro.config.mjs`).** `sitemap({ filter: (page) => !/\/blog(\/|$)/.test(page) })` keeps every `/blog` URL out of `sitemap-index.xml`, consistent with the noindex (avoids the "noindexed URL in sitemap" conflict).
+
+### Verification
+- Full data-backed `astro build` clean (49 companies + 9 services + blog), no type errors — the new `noindex` prop wiring is type-clean.
+- **Live prod (`kitchen-directory.vercel.app`):** 0 `href="/blog"` in homepage nav (other nav links intact); `noindex, nofollow` meta present on `/blog` **and** a `/blog/[slug]` post (posts still render); 0 `/blog` URLs in `sitemap-0.xml` (74 other URLs intact).
+- **agent-browser visual QA at 1280×800 + 375×812** on the live prod alias: desktop nav and mobile hamburger dropdown render cleanly with no Blog row and no layout breakage; console clean.
+
+### Re-enabling (when content is approved) — the blog MUST become indexable again
+1. **Remove the `noindex`** from both blog `<Base>` calls — this is the critical step; while present the pages emit `noindex, nofollow` and Google won't index / AI engines won't cite them (the whole point of bringing an AEO-first blog back). The `noindex?` prop on `Base.astro` can stay (reusable, harmless when unset).
+2. **Restore the two `Blog` nav links** in `Header.astro` (desktop + mobile dropdown).
+3. **Remove the sitemap `filter`** in `astro.config.mjs`.
+Then redeploy and confirm: no `noindex` meta on `/blog` or posts, Blog back in nav, `/blog` URLs back in the sitemap. (Tracked in the `project_blog_temporarily_hidden` memory.)
