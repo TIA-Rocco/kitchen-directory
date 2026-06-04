@@ -110,17 +110,28 @@ const jsonLd: Record<string, unknown>[] = [
   <Header />
 
   <main>
-    <section class="bg-neutral-950 py-20">
+    <section class="relative isolate overflow-hidden bg-neutral-950 py-20">
+      <img
+        src={`/heroes/services/${slug}.jpg`}
+        alt=""
+        aria-hidden="true"
+        fetchpriority="high"
+        class="absolute inset-0 -z-10 size-full object-cover object-center"
+      />
+      <div
+        class="absolute inset-0 -z-10 bg-gradient-to-r from-neutral-950 via-neutral-950/75 to-neutral-950/25"
+        aria-hidden="true"
+      ></div>
       <div class="mx-auto max-w-7xl px-6">
-        <nav class="mb-6 flex items-center gap-2 text-sm text-neutral-500" aria-label="Breadcrumb">
-          <a href="/" class="hover:text-neutral-300">Home</a>
+        <nav class="mb-6 flex items-center gap-2 text-sm text-neutral-300" aria-label="Breadcrumb">
+          <a href="/" class="hover:text-white">Home</a>
           <span>/</span>
-          <a href="/services" class="hover:text-neutral-300">Services</a>
+          <a href="/services" class="hover:text-white">Services</a>
           <span>/</span>
-          <span class="text-neutral-300">{serviceName}</span>
+          <span class="text-white">{serviceName}</span>
         </nav>
         <h1 class="max-w-[30ch] text-5xl font-semibold tracking-tight text-balance text-white">{serviceName}</h1>
-        <p class="mt-6 max-w-[48ch] text-lg text-pretty text-neutral-400">Find and compare trusted suppliers offering {serviceName.toLowerCase()} for commercial kitchens across Canada.</p>
+        <p class="mt-6 max-w-[48ch] text-lg text-pretty text-neutral-200">Find and compare trusted suppliers offering {serviceName.toLowerCase()} for commercial kitchens across Canada.</p>
       </div>
     </section>
 

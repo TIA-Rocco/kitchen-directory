@@ -72,14 +72,26 @@ const jsonLd = [
   <Header />
 
   <main>
-    <!-- Hero: headline + subcopy beside an emerald/neutral graphic. -->
-    <section class="bg-neutral-950">
-      <div class="mx-auto grid max-w-7xl items-center gap-12 px-6 py-20 lg:grid-cols-[1.1fr_0.9fr] lg:py-24">
-        <div>
+    <!-- Hero: headline + subcopy over the bright kitchen-team photograph. -->
+    <section class="relative isolate overflow-hidden bg-neutral-950">
+      <img
+        src="/heroes/home.jpg"
+        alt=""
+        aria-hidden="true"
+        fetchpriority="high"
+        class="absolute inset-0 -z-10 size-full object-cover object-[center_35%]"
+      />
+      <!-- Scrim: keeps the white text legible while the right side stays bright and airy. -->
+      <div
+        class="absolute inset-0 -z-10 bg-gradient-to-r from-neutral-950 via-neutral-950/75 to-neutral-950/25"
+        aria-hidden="true"
+      ></div>
+      <div class="mx-auto max-w-7xl px-6 py-20 lg:py-24">
+        <div class="max-w-2xl">
           <h1 class="max-w-[18ch] text-5xl font-semibold tracking-tight text-balance text-white sm:text-6xl">
             Find the Best Commercial Kitchen Equipment Suppliers
           </h1>
-          <p class="mt-6 max-w-[48ch] text-lg text-pretty text-neutral-400">
+          <p class="mt-6 max-w-[48ch] text-lg text-pretty text-neutral-200">
             Independent rankings, verified reviews, and service comparisons for commercial kitchen equipment suppliers across Canada.
           </p>
           <div class="mt-8 flex flex-wrap gap-3">
@@ -91,28 +103,10 @@ const jsonLd = [
             </a>
             <a
               href="#categories"
-              class="rounded-md px-4 py-2.5 text-sm font-medium text-neutral-200 ring-1 ring-white/15 transition-colors hover:bg-white/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40"
+              class="rounded-md bg-white/10 px-4 py-2.5 text-sm font-medium text-white ring-1 ring-white/20 backdrop-blur-sm transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40"
             >
               Explore by service
             </a>
-          </div>
-        </div>
-
-        <!-- Decorative icon cluster (no external assets). -->
-        <div class="max-lg:hidden" aria-hidden="true">
-          <div class="relative mx-auto grid max-w-sm grid-cols-3 gap-3">
-            {['design-and-technical-drawings', 'commercial-equipment-procurement', 'equipment-financing', 'equipment-leasing', 'equipment-consulting', 'installation-services', 'price-match', 'account-management', 'restaurant-consulting'].map((slug, i) => (
-              <div
-                class:list={[
-                  'flex aspect-square items-center justify-center rounded-xl ring-1 transition-colors',
-                  i === 4
-                    ? 'bg-emerald-600 text-white ring-emerald-500/40'
-                    : 'bg-white/5 text-emerald-400 ring-white/10',
-                ]}
-              >
-                <ServiceIcon slug={slug} class="size-7" />
-              </div>
-            ))}
           </div>
         </div>
       </div>
