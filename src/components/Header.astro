@@ -74,7 +74,9 @@ const navServices = navServicesRaw ?? [];
       <a href="/blog" class="max-sm:hidden text-sm font-medium text-neutral-600 hover:text-neutral-900">Blog</a>
       <a href="/submit-review" class="max-sm:hidden text-sm font-medium text-neutral-600 hover:text-neutral-900">Submit a Review</a>
       <a href="/list-your-company" class="max-sm:hidden text-sm font-medium text-neutral-600 hover:text-neutral-900">List your company</a>
-      <a href="/contact" class="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600">Contact Us</a>
+      <!-- Contact Us is the only desktop CTA; on mobile it moves into the dropdown
+           panel below so it can't crowd / collide with the site name. -->
+      <a href="/contact" class="max-sm:hidden rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600">Contact Us</a>
 
       <!-- Mobile hamburger (sm:hidden; toggles the dropdown panel below). -->
       <button
@@ -154,6 +156,10 @@ const navServices = navServicesRaw ?? [];
       <a href="/blog" class="block rounded-lg px-3 py-3 text-base font-medium text-neutral-800 hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600">Blog</a>
       <a href="/submit-review" class="block rounded-lg px-3 py-3 text-base font-medium text-neutral-800 hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600">Submit a Review</a>
       <a href="/list-your-company" class="block rounded-lg px-3 py-3 text-base font-medium text-neutral-800 hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600">List your company</a>
+
+      <!-- Contact Us — primary CTA, kept prominent on mobile (replaces the
+           top-nav button that crowded the site name below the sm breakpoint). -->
+      <a href="/contact" class="mt-2 block rounded-md bg-emerald-600 px-3 py-3 text-center text-base font-medium text-white hover:bg-emerald-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600">Contact Us</a>
     </div>
   </div>
 </header>
