@@ -20,6 +20,13 @@ export interface Company {
   faq: FaqItem[];
   partners: Partner[];
   is_featured: boolean;
+  // Attributed third-party Google Business Profile rating (display-only snapshot).
+  // NEVER fed into the page's own AggregateRating JSON-LD — see src/lib/schema.ts.
+  google_place_id: string | null;
+  google_rating: number | null;
+  google_review_count: number | null;
+  google_rating_as_of: string | null;
+  google_place_url: string | null;
   created_at: string;
   updated_at: string;
 }

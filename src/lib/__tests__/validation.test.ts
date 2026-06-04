@@ -4,6 +4,7 @@ import {
   isValidCanadianPostalCode,
   normalizeServices,
   normalizeCertifications,
+  normalizeGoogleRating,
   validateFaq,
   parseTurnstileResponse,
   ALLOWED_SERVICE_SLUGS,
@@ -212,5 +213,68 @@ describe('slug generation contract', () => {
   });
   it('trims leading/trailing dashes', () => {
     expect(slugify('  -Hello-  ')).toBe('hello');
+  });
+});
+
+describe('normalizeGoogleRating', () => {
+  it('parses and clamps a well-formed admin payload', () => {
+    expect(
+      normalizeGoogleRating({
+        google_place_id: '  ChIJabc  ',
+        google_rating: '4.4',
+        google_review_count: '241',
+        google_rating_as_of: '2026-06-04',
+        google_place_url: 'https://search.google.com/local/reviews?placeid=ChIJabc',
+      })
+    ).toEqual({
+      google_place_id: 'ChIJabc',
+      google_rating: 4.4,
+      google_review_count: 241,
+      google_rating_as_of: '2026-06-04',
+      google_place_url: 'https://search.google.com/local/reviews?placeid=ChIJabc',
+    });
+  });
+
+  it('nulls out empty/blank fields', () => {
+    expect(
+      normalizeGoogleRating({
+        google_place_id: '',
+        google_rating: '',
+        google_review_count: '',
+        google_rating_as_of: '',
+        google_place_url: '',
+      })
+    ).toEqual({
+      google_place_id: null,
+      google_rating: null,
+      google_review_count: null,
+      google_rating_as_of: null,
+      google_place_url: null,
+    });
+  });
+
+  it('clamps rating to 0–5 with one decimal', () => {
+    expect(normalizeGoogleRating({ google_rating: '9' }).google_rating).toBe(5);
+    expect(normalizeGoogleRating({ google_rating: '-3' }).google_rating).toBe(0);
+    expect(normalizeGoogleRating({ google_rating: '4.46' }).google_rating).toBe(4.5);
+    expect(normalizeGoogleRating({ google_rating: 'abc' }).google_rating).toBeNull();
+  });
+
+  it('floors review count and rejects negatives/junk', () => {
+    expect(normalizeGoogleRating({ google_review_count: '12.9' }).google_review_count).toBe(12);
+    expect(normalizeGoogleRating({ google_review_count: '-4' }).google_review_count).toBeNull();
+    expect(normalizeGoogleRating({ google_review_count: 'nope' }).google_review_count).toBeNull();
+  });
+
+  it('accepts only YYYY-MM-DD dates', () => {
+    expect(normalizeGoogleRating({ google_rating_as_of: '2026-06-04' }).google_rating_as_of).toBe('2026-06-04');
+    expect(normalizeGoogleRating({ google_rating_as_of: 'June 4 2026' }).google_rating_as_of).toBeNull();
+    expect(normalizeGoogleRating({ google_rating_as_of: '2026-13-40' }).google_rating_as_of).toBeNull();
+  });
+
+  it('accepts only http(s) place URLs', () => {
+    expect(normalizeGoogleRating({ google_place_url: 'https://x.test/a' }).google_place_url).toBe('https://x.test/a');
+    expect(normalizeGoogleRating({ google_place_url: 'javascript:alert(1)' }).google_place_url).toBeNull();
+    expect(normalizeGoogleRating({ google_place_url: 'ftp://x' }).google_place_url).toBeNull();
   });
 });

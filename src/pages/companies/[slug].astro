@@ -12,6 +12,7 @@ import type { Company, Review, RankingBreakdown } from '../../lib/types';
 import { RANKING_LABELS, RANKING_WEIGHTS } from '../../lib/types';
 import { supabase } from '../../lib/supabase';
 import InfoTooltip from '../../components/InfoTooltip.astro';
+import GoogleRating from '../../components/GoogleRating.astro';
 
 export async function getStaticPaths() {
   const { data: companies } = await supabase.from('companies').select('slug').is('deleted_at', null);
@@ -149,6 +150,9 @@ const jsonLd = [
                 <span class="text-sm text-neutral-400">({approvedReviews.length} {approvedReviews.length === 1 ? 'review' : 'reviews'})</span>
               </div>
             </div>
+
+            {/* Attributed third-party Google rating (display-only; never in JSON-LD). Renders nothing without data. */}
+            <GoogleRating data={company} />
 
             <div class="mt-6 space-y-3">
               {(Object.entries(company.ranking_breakdown) as [keyof RankingBreakdown, number][]).map(([key, value]) => (
