@@ -41,3 +41,6 @@ supabase/seed/_chunks/
 /playwright/.cache/
 /e2e/.auth/
 .env.e2e
+
+# security audit reports (may reference internal infra)
+.context/
