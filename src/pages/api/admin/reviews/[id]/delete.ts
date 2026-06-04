@@ -2,6 +2,7 @@ export const prerender = false;
 
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../../../../lib/supabase-server';
+import { requireAdmin } from '../../../../../lib/admin-auth';
 
 // Permanently remove a review (hard delete). Used by admins to purge spam /
 // test reviews, including ones that were already approved. If the review was
@@ -12,7 +13,9 @@ import { supabaseAdmin } from '../../../../../lib/supabase-server';
 // "remove" semantics here.
 export const POST: APIRoute = async ({ params, locals }) => {
   const { id } = params;
-  if (!id || !locals.user) return json({ error: 'unauthorized' }, 401);
+  const auth = requireAdmin(locals);
+  if (auth instanceof Response) return auth;
+  if (!id) return json({ error: 'missing id' }, 400);
 
   const { error } = await supabaseAdmin.from('reviews').delete().eq('id', id);
   if (error) {

@@ -2,12 +2,14 @@ export const prerender = false;
 
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../../../lib/supabase-server';
+import { requireAdmin } from '../../../../lib/admin-auth';
 import { normalizeCertifications, normalizeGoogleRating } from '../../../../lib/validation';
 
 // Manually create a company (admin "New company"), independent of the
 // self-submission flow. Slug auto-generated + uniquified by the DB function.
 export const POST: APIRoute = async ({ request, locals }) => {
-  if (!locals.user) return json({ error: 'unauthorized' }, 401);
+  const auth = requireAdmin(locals);
+  if (auth instanceof Response) return auth;
 
   let body: Record<string, any> = {};
   try { body = await request.json(); } catch { return json({ error: 'invalid json' }, 400); }

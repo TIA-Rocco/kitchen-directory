@@ -2,12 +2,15 @@ export const prerender = false;
 
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../../../../lib/supabase-server';
+import { requireAdmin } from '../../../../../lib/admin-auth';
 
 // Auto-save moderator notes on a review. Mirrors the supplier-submission
 // notes endpoint.
 export const POST: APIRoute = async ({ params, request, locals }) => {
   const { id } = params;
-  if (!id || !locals.user) return json({ error: 'unauthorized' }, 401);
+  const auth = requireAdmin(locals);
+  if (auth instanceof Response) return auth;
+  if (!id) return json({ error: 'missing id' }, 400);
 
   let body: { internal_notes?: unknown } = {};
   try { body = await request.json(); } catch {

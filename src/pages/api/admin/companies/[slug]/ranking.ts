@@ -2,6 +2,7 @@ export const prerender = false;
 
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../../../../lib/supabase-server';
+import { requireAdmin } from '../../../../../lib/admin-auth';
 
 const KEYS = [
   'service_range',
@@ -14,7 +15,9 @@ const KEYS = [
 
 export const POST: APIRoute = async ({ params, request, locals }) => {
   const { slug } = params;
-  if (!slug || !locals.user) return json({ error: 'unauthorized' }, 401);
+  const auth = requireAdmin(locals);
+  if (auth instanceof Response) return auth;
+  if (!slug) return json({ error: 'missing slug' }, 400);
 
   let body: Record<string, unknown> = {};
   try { body = await request.json(); } catch {

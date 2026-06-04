@@ -2,13 +2,16 @@ export const prerender = false;
 
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../../../../lib/supabase-server';
+import { requireAdmin } from '../../../../../lib/admin-auth';
 
 // Move a rejected review back to 'pending' so it can be re-moderated and
 // approved (recovery path — no more hand-editing Supabase). Mirrors the
 // supplier-submission reopen flow.
 export const POST: APIRoute = async ({ params, locals }) => {
   const { id } = params;
-  if (!id || !locals.user) return json({ error: 'unauthorized' }, 401);
+  const auth = requireAdmin(locals);
+  if (auth instanceof Response) return auth;
+  if (!id) return json({ error: 'missing id' }, 400);
 
   const { error } = await supabaseAdmin
     .from('reviews')
