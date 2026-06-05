@@ -56,20 +56,20 @@ const companies = (companiesRaw || []).map((c) => {
 const suppliersItemList = buildItemListSchema(
   companies,
   'Top Commercial Kitchen Equipment Suppliers in Canada',
-  'https://kitchenequipment.ca/services'
+  'https://www.kitchenequipment.ca/services'
 );
 
 const servicesItemList = {
   '@context': 'https://schema.org',
   '@type': 'ItemList',
   name: 'Commercial Kitchen Equipment Supplier Services',
-  url: 'https://kitchenequipment.ca/services',
+  url: 'https://www.kitchenequipment.ca/services',
   numberOfItems: serviceCategories.length,
   itemListElement: serviceCategories.map((s, index) => ({
     '@type': 'ListItem',
     position: index + 1,
     name: s.name,
-    url: `https://kitchenequipment.ca/services/${s.slug}`,
+    url: `https://www.kitchenequipment.ca/services/${s.slug}`,
   })),
 };
 
@@ -77,8 +77,8 @@ const breadcrumbSchema = {
   '@context': 'https://schema.org',
   '@type': 'BreadcrumbList',
   itemListElement: [
-    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://kitchenequipment.ca' },
-    { '@type': 'ListItem', position: 2, name: 'Services', item: 'https://kitchenequipment.ca/services' },
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.kitchenequipment.ca' },
+    { '@type': 'ListItem', position: 2, name: 'Services', item: 'https://www.kitchenequipment.ca/services' },
   ],
 };
 
