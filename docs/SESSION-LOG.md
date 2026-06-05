@@ -339,3 +339,40 @@ Content team wants to review the blog posts manually before they're shared, so t
 2. **Restore the two `Blog` nav links** in `Header.astro` (desktop + mobile dropdown).
 3. **Remove the sitemap `filter`** in `astro.config.mjs`.
 Then redeploy and confirm: no `noindex` meta on `/blog` or posts, Blog back in nav, `/blog` URLs back in the sitemap. (Tracked in the `project_blog_temporarily_hidden` memory.)
+
+## What Was Built (Session: 2026-06-05, PRs #62 + #63 — SEO pre-launch audit implementation + polish)
+Worked the SEO pre-launch audit (Asana task 1212777623943265) and the technical parts of the post-launch audit (1212777619690635) against the **live** site (now at `https://www.kitchenequipment.ca`) plus the codebase. Most of the checklist was already satisfied by the build; the decisive gap was that **every canonical signal still pointed at the old Vercel preview domain** (`kitchen-directory.vercel.app`) — at launch that would have told Google the canonical site was the preview alias. Reviewed independently by Codex (diff review) and an SEO-specialist agent before merge.
+
+### PR #62 — canonical domain + structured-data consistency (merge commit `c30b5df`)
+1. **`astro.config.mjs` `site`** → `https://www.kitchenequipment.ca` (drives `<link rel=canonical>`, `og:url`, sitemap `<loc>`s). www is the live primary host — Vercel 308-redirects apex + http + www-http → www.
+2. **`public/robots.txt`** — `Sitemap:` → www; added `Disallow: /admin/` + `/api/`.
+3. **Sitemap filter** (`astro.config.mjs`) — now also excludes `/admin/*` (8 admin URLs were leaking into the live sitemap; they were already noindexed via `Admin.astro` but shouldn't be listed).
+4. **JSON-LD URLs** in `src/lib/schema.ts` + `index.astro` + `services/[slug].astro` + `services/index.astro` — 26 hardcoded apex (`https://kitchenequipment.ca`, non-www) `@id`/`url`/breadcrumb/ItemList URLs → www.
+5. **Broken Organization/publisher logo** — `/logo.svg` (404) → `/brand/logo.svg` (the real file).
+6. **Trailing-slash alignment** — canonical + sitemap use Astro directory format (trailing slash) but JSON-LD `@id`/`url` were slash-less, fragmenting the entity graph for AEO. Appended trailing slashes to every self-referential JSON-LD URL so `@id` == `url` == canonical exactly. Left `/brand/logo.svg` (a file) untouched.
+7. **Company `BreadcrumbList`** — `/companies/[slug]` emitted none (services pages did); added one mirroring the visible Home / Companies / {name} breadcrumb.
+8. **DB (via MCP, not in the diff):** `companies.logo_url` for `shop-at-stop` normalized from an absolute `vercel.app` URL → relative `/logos/shop-at-stop.png` (matching its 48 siblings; it also fed LocalBusiness JSON-LD `image`). Verified no other company/partner/blog row held a stray `vercel.app`/apex URL.
+9. Updated Vitest expectations + public Playwright E2E JSON-LD assertions to match (Codex caught that the E2E specs were missed initially). `image.domains` placeholder → real Supabase ref.
+
+### PR #63 — SEO polish (merge commit `aeaa317`)
+1. **noindex thin pages** — `/thank-you` + `/verify-submission` now pass `noindex` (Base prop) and are excluded from the sitemap (transactional confirmation pages, no search value). Form pages stay indexable.
+2. **Sitemap `<lastmod>`** — `astro.config.mjs` builds a URL→`updated_at` map from `companies` at build time and attaches per-page `lastmod` via the sitemap `serialize` hook. Company pages get their own `companies.updated_at`; all other pages fall back to the freshest company timestamp (the tables are company-derived and the SSG site rebuilds on any company change). DB fetch wrapped in try/catch — a missing env var / unreachable DB never fails the build.
+3. **Security headers (SEC-04)** — new `vercel.json`: `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy`, and a **Report-Only** CSP with the documented allowlist (Supabase, Cloudflare Turnstile, Vercel analytics, self fonts). HSTS intentionally NOT in vercel.json — it's set at the Vercel platform level; verified it stays a single header (no duplicate). Confirmed `vercel.json` headers DO apply under Astro's Build Output API (present on static + SSR responses live).
+
+### Infra changes (owner's dashboards, not in the repo)
+- **Vercel Domains:** `kitchen-directory.vercel.app` alias set to 308-redirect → `https://www.kitchenequipment.ca` (collapses the duplicate-domain risk; was returning 200 and already indexed).
+- **`PUBLIC_SITE_URL`** env → `https://www.kitchenequipment.ca` + redeploy (admin magic-link callbacks). **Supabase Auth** Site URL + redirect URLs moved to www; stale vercel.app redirect entries removed. Verified via the Supabase auth log that the magic-link `redirect_to` now resolves on www.
+
+### Verification (all live on www)
+- Canonical, og:url, sitemap `<loc>`s, JSON-LD `@id`/`url` all `https://www.kitchenequipment.ca/...` with trailing slashes; **0** `vercel.app` and **0** non-www refs in the build; canonical == JSON-LD `@id` on homepage/company/service pages.
+- Sitemap: 65 locs (admin/blog/thin pages excluded), **all with per-page `lastmod`**.
+- `vercel.app/*` → 308 → matching www page; apex/http → 308 → www.
+- Security headers present on homepage + company pages; HSTS single; CSP Report-Only.
+- `/thank-you` + `/verify-submission` render `noindex, nofollow` live.
+- 113/113 unit tests pass on both PRs.
+
+### Known / follow-ups (see `project_seo_launch_state` memory)
+- **CSP is Report-Only** — review browser-console violations on key pages (homepage, `/list-your-company` w/ Turnstile, `/admin/login`, a company page), tune, then rename header `Content-Security-Policy-Report-Only` → `Content-Security-Policy` to enforce.
+- **Tracking (GA4 / GTM / Meta Pixel)** — owned by the TIA Tracking team (Chandu); NOT part of this SEO work (only Vercel Analytics present).
+- **GSC verification + sitemap submission, Screaming Frog + Ahrefs crawls, index-status** — separate post-launch Asana task (Dejeesh).
+- **`Organization` `sameAs` + `contactPoint`** — not added; needs the owner's real social URLs + contact email (strongest remaining AEO entity signal). A `/companies` index page would also improve crawl depth + give the company breadcrumb a real middle crumb.

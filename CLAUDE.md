@@ -177,3 +177,5 @@ One line per session. Full write-ups: [`docs/SESSION-LOG.md`](docs/SESSION-LOG.m
 | 2026-06-04 | #55 | Site-wide shared `<Header />` (10 pages de-duped) + Contact-Us-in-dropdown; admin hard-delete reviews (017) |
 | 2026-06-04 | #57 | `requireAdmin()` defense-in-depth across all 14 `/api/admin/*` handlers (`src/lib/admin-auth.ts`) |
 | 2026-06-04 | #59 | Temporarily hide blog (noindex + removed from nav + dropped from sitemap; re-enable steps in Gotchas) |
+| 2026-06-05 | #62 | SEO pre-launch audit: canonical/og/sitemap/JSON-LD repointed vercel.app→`www.kitchenequipment.ca`; trailing-slash align (canonical==JSON-LD `@id`); company `BreadcrumbList`; Org logo→`/brand/logo.svg`; robots.txt + admin out of sitemap. Plus infra (not in repo): vercel.app alias 308→www, `PUBLIC_SITE_URL`→www |
+| 2026-06-05 | #63 | SEO polish: `noindex` `/thank-you` + `/verify-submission` (+ sitemap exclusion); per-page sitemap `<lastmod>` from `companies.updated_at` (built in `astro.config.mjs`); security headers via new `vercel.json` (XFO/XCTO/Referrer/Permissions + CSP **Report-Only**) |
