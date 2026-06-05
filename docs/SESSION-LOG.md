@@ -376,3 +376,24 @@ Worked the SEO pre-launch audit (Asana task 1212777623943265) and the technical 
 - **Tracking (GA4 / GTM / Meta Pixel)** — owned by the TIA Tracking team (Chandu); NOT part of this SEO work (only Vercel Analytics present).
 - **GSC verification + sitemap submission, Screaming Frog + Ahrefs crawls, index-status** — separate post-launch Asana task (Dejeesh).
 - **`Organization` `sameAs` + `contactPoint`** — not added; needs the owner's real social URLs + contact email (strongest remaining AEO entity signal). A `/companies` index page would also improve crawl depth + give the company breadcrumb a real middle crumb.
+
+## What Was Built (Session: 2026-06-05, PR #65 — reveal-on-scroll-up sticky header)
+
+Made the shared site header (`src/components/Header.astro`) a **reveal-on-scroll-up sticky nav** so the nav is reachable from anywhere on the page without permanently occupying the viewport.
+
+### Changes (single file: `Header.astro`)
+- `<header>` changed from `relative` → `sticky top-0 z-50` with `transition-transform duration-300 ease-in-out will-change-transform motion-reduce:transition-none`, plus a `data-site-header` hook.
+- New `initStickyHeader()` in the component's inline `<script>` (called on first load **and** `astro:page-load`, alongside the existing menu initializers):
+  - Hides the header (`-translate-y-full`) on scroll-**down**, reveals it on scroll-**up**.
+  - `requestAnimationFrame`-throttled, `passive` scroll listener, 6px intent threshold to debounce jitter.
+  - **Guards (nav must never disappear under the user):** always shown within 80px of the top; stays shown while any menu is open (checks `[aria-expanded="true"]` — covers desktop Services dropdown + mobile hamburger); stays shown while focus is inside the header (+ reveals on `focusin`).
+  - **`prefers-reduced-motion`** → early-return, header stays a plain always-pinned sticky bar (no slide).
+
+### Why sticky (not fixed)
+`sticky top-0` keeps the header in normal document flow at the very top (no spacer / no layout jump) and only pins once scrolled past; translating `-100%` then slides it cleanly off the top edge. The dropdown panels' absolute positioning still resolves correctly (desktop panel → its `relative` wrapper; mobile panel → the now-`sticky` header is still a positioned containing block). No `overflow-hidden` ancestor (verified `Base.astro` `.isolate` wrapper + body), so sticky works.
+
+### Verification
+- **Behavioral (local dev + live prod, both 1280×800 and 375×812):** top → shown, scroll-down → hidden, further down → stays hidden, scroll-up → revealed, back-to-top → shown.
+- **Guards:** desktop dropdown open + scroll-down → stays shown; mobile hamburger open + scroll-down → stays shown.
+- `npm run build` clean (exit 0, all pages); no console errors on local or live.
+- **Post-merge QA on `https://www.kitchenequipment.ca`** confirmed the reveal cycle + screenshots on both viewports.
