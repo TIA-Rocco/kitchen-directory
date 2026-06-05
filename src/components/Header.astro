@@ -16,7 +16,10 @@ const { data: navServicesRaw } = await supabase
 const navServices = navServicesRaw ?? [];
 ---
 
-<header class="relative border-b border-neutral-950/5 bg-white">
+<header
+  data-site-header
+  class="sticky top-0 z-50 border-b border-neutral-950/5 bg-white transition-transform duration-300 ease-in-out will-change-transform motion-reduce:transition-none"
+>
   <nav class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
     <a href="/" aria-label="Homepage" class="flex items-center gap-2">
       <img src="/brand/logo.svg" alt="Kitchen Equipment Canada" width="72" height="32" class="h-8 w-auto" />
@@ -336,10 +339,83 @@ const navServices = navServicesRaw ?? [];
     });
   }
 
+  // Reveal-on-scroll-up sticky header: slides out of view while scrolling down
+  // (so it never crowds the content) and slides back in the moment the user
+  // scrolls up, keeping the nav reachable from anywhere on the page.
+  function initStickyHeader() {
+    const header = document.querySelector('[data-site-header]') as HTMLElement | null;
+    if (!header || header.dataset.scrollBound) return;
+    header.dataset.scrollBound = 'true';
+
+    // Reduced-motion users get a plain pinned header — never slid away.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const HIDDEN = '-translate-y-full';
+    const TOP_GUARD = 80; // always reveal within this many px of the top
+    const INTENT = 6; // px of travel before we react (debounces jitter)
+
+    let lastY = window.scrollY;
+    let hidden = false;
+    let ticking = false;
+
+    const show = () => {
+      if (!hidden) return;
+      hidden = false;
+      header.classList.remove(HIDDEN);
+    };
+    const hide = () => {
+      if (hidden) return;
+      hidden = true;
+      header.classList.add(HIDDEN);
+    };
+
+    const update = () => {
+      ticking = false;
+      const y = Math.max(0, window.scrollY);
+      const delta = y - lastY;
+
+      // Keep the nav shown near the top, while a menu is open, or while focus
+      // lives inside the header — it must never slide out from under the user.
+      if (
+        y <= TOP_GUARD ||
+        header.querySelector('[aria-expanded="true"]') ||
+        header.contains(document.activeElement)
+      ) {
+        show();
+        lastY = y;
+        return;
+      }
+
+      if (delta > INTENT) {
+        hide();
+        lastY = y;
+      } else if (delta < -INTENT) {
+        show();
+        lastY = y;
+      }
+    };
+
+    window.addEventListener(
+      'scroll',
+      () => {
+        if (!ticking) {
+          ticking = true;
+          requestAnimationFrame(update);
+        }
+      },
+      { passive: true },
+    );
+
+    // Keyboard focus entering the (possibly hidden) header reveals it.
+    header.addEventListener('focusin', show);
+  }
+
   initServicesMenus();
   initMobileMenu();
+  initStickyHeader();
   document.addEventListener('astro:page-load', () => {
     initServicesMenus();
     initMobileMenu();
+    initStickyHeader();
   });
 </script>
