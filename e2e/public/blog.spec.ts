@@ -56,7 +56,7 @@ test.describe('Blog post pages', () => {
       const blocks = await getJsonLd(page);
       const posting = findByType(blocks, 'BlogPosting');
       expect(posting, 'BlogPosting schema').toBeTruthy();
-      expect(posting!['@id']).toBe(`https://kitchenequipment.ca/blog/${slug}`);
+      expect(posting!['@id']).toBe(`https://www.kitchenequipment.ca/blog/${slug}`);
       expect(posting!.headline).toBe(h1);
       expect(posting!.datePublished).toMatch(/^\d{4}-\d{2}-\d{2}$/);
       expect((posting!.author as any)['@type']).toBe('Organization');

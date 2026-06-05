@@ -47,7 +47,7 @@ test.describe('Service category pages', () => {
         const itemList = findByType(blocks, 'ItemList');
         expect(itemList, 'ItemList').toBeTruthy();
         expect(itemList!.name).toBe(`Best ${svc.name} Suppliers in Canada`);
-        expect(itemList!.url).toBe(`https://kitchenequipment.ca/services/${svc.slug}`);
+        expect(itemList!.url).toBe(`https://www.kitchenequipment.ca/services/${svc.slug}`);
 
         const service = findByType(blocks, 'Service');
         expect(service, 'Service').toBeTruthy();

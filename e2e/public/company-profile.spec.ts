@@ -91,7 +91,7 @@ test.describe('Company profile pages', () => {
         const lb = findByType(blocks, 'LocalBusiness');
         expect(lb, 'LocalBusiness schema').toBeTruthy();
         expect(lb!.name).toBe(company.name);
-        expect(lb!['@id']).toBe(`https://kitchenequipment.ca/companies/${company.slug}`);
+        expect(lb!['@id']).toBe(`https://www.kitchenequipment.ca/companies/${company.slug}`);
         expect((lb!.address as any)['@type']).toBe('PostalAddress');
         expect((lb!.address as any).addressCountry).toBe('CA');
 
