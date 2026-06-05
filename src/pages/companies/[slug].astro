@@ -52,8 +52,22 @@ const faqPage = buildFAQPageSchema(company.faq);
 const reviewSchemas = approvedReviews.map((r) => buildReviewSchema(r, company.name));
 const serviceSchemas = company.services.map((s) => buildServiceSchema(s, company.name));
 
+// BreadcrumbList mirrors the visible breadcrumb below (Home / Companies / {name}).
+// There is no /companies index page yet, so "Companies" points at the homepage —
+// matching the on-page breadcrumb. URLs are trailing-slash to match the canonical.
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.kitchenequipment.ca/' },
+    { '@type': 'ListItem', position: 2, name: 'Companies', item: 'https://www.kitchenequipment.ca/' },
+    { '@type': 'ListItem', position: 3, name: company.name, item: `https://www.kitchenequipment.ca/companies/${company.slug}/` },
+  ],
+};
+
 const jsonLd = [
   localBusiness,
+  breadcrumbSchema,
   ...(faqPage ? [faqPage] : []),
   ...reviewSchemas,
   ...serviceSchemas,

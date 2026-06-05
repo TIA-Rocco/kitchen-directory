@@ -30,7 +30,7 @@ const breadcrumbLd = {
   '@type': 'BreadcrumbList',
   itemListElement: [
     { '@type': 'ListItem', position: 1, name: 'Home', item: new URL('/', siteUrl).href },
-    { '@type': 'ListItem', position: 2, name: 'Apply to be Listed', item: new URL('/list-your-company', siteUrl).href },
+    { '@type': 'ListItem', position: 2, name: 'Apply to be Listed', item: new URL('/list-your-company/', siteUrl).href },
   ],
 };
 
@@ -39,7 +39,7 @@ const webPageLd = {
   '@type': 'WebPage',
   name: 'Apply to be Listed | Kitchen Equipment Canada',
   description: pageDescription,
-  url: new URL('/list-your-company', siteUrl).href,
+  url: new URL('/list-your-company/', siteUrl).href,
 };
 
 const inputClass = 'mt-1.5 w-full rounded-lg px-3 py-2.5 text-sm ring-1 ring-black/10 focus:outline-2 focus:-outline-offset-1 focus:outline-emerald-600 max-sm:text-base/6';

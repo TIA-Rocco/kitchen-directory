@@ -108,12 +108,12 @@ describe('buildLocalBusinessSchema', () => {
     expect(schema['@context']).toBe('https://schema.org');
     expect(schema['@type']).toBe('LocalBusiness');
     expect(schema['@id']).toBe(
-      'https://kitchenequipment.ca/companies/test-kitchen-co'
+      'https://www.kitchenequipment.ca/companies/test-kitchen-co/'
     );
     expect(schema.name).toBe('Test Kitchen Co');
     expect(schema.description).toBe('A great kitchen supplier.');
     expect(schema.url).toBe(
-      'https://kitchenequipment.ca/companies/test-kitchen-co'
+      'https://www.kitchenequipment.ca/companies/test-kitchen-co/'
     );
     expect(schema.telephone).toBe('416-555-1234');
     expect(schema.email).toBe('info@example.com');
@@ -413,20 +413,20 @@ describe('buildItemListSchema', () => {
     const schema = buildItemListSchema(
       companies,
       'Top Suppliers',
-      'https://kitchenequipment.ca/suppliers'
+      'https://www.kitchenequipment.ca/suppliers/'
     );
 
     expect(schema['@context']).toBe('https://schema.org');
     expect(schema['@type']).toBe('ItemList');
     expect(schema.name).toBe('Top Suppliers');
-    expect(schema.url).toBe('https://kitchenequipment.ca/suppliers');
+    expect(schema.url).toBe('https://www.kitchenequipment.ca/suppliers/');
     expect(schema.numberOfItems).toBe(2);
     expect(schema.itemListElement).toHaveLength(2);
     expect(schema.itemListElement[0].position).toBe(1);
     expect(schema.itemListElement[1].position).toBe(2);
     expect(schema.itemListElement[0].item.name).toBe('Alpha');
     expect(schema.itemListElement[1].item['@id']).toBe(
-      'https://kitchenequipment.ca/companies/beta'
+      'https://www.kitchenequipment.ca/companies/beta/'
     );
   });
 
@@ -449,7 +449,7 @@ describe('buildWebSiteSchema', () => {
     expect(schema['@context']).toBe('https://schema.org');
     expect(schema['@type']).toBe('WebSite');
     expect(schema.name).toBe('Kitchen Equipment Canada');
-    expect(schema.url).toBe('https://kitchenequipment.ca');
+    expect(schema.url).toBe('https://www.kitchenequipment.ca/');
     expect(schema.description).toContain('commercial kitchen equipment');
   });
 });
@@ -465,8 +465,8 @@ describe('buildOrganizationSchema', () => {
     expect(schema['@context']).toBe('https://schema.org');
     expect(schema['@type']).toBe('Organization');
     expect(schema.name).toBe('Kitchen Equipment Canada');
-    expect(schema.url).toBe('https://kitchenequipment.ca');
-    expect(schema.logo).toBe('https://kitchenequipment.ca/logo.svg');
+    expect(schema.url).toBe('https://www.kitchenequipment.ca/');
+    expect(schema.logo).toBe('https://www.kitchenequipment.ca/brand/logo.svg');
   });
 });
 
@@ -482,11 +482,11 @@ describe('buildBlogPostingSchema', () => {
     expect(schema['@context']).toBe('https://schema.org');
     expect(schema['@type']).toBe('BlogPosting');
     expect(schema['@id']).toBe(
-      'https://kitchenequipment.ca/blog/best-commercial-knives-2026'
+      'https://www.kitchenequipment.ca/blog/best-commercial-knives-2026/'
     );
     expect(schema.headline).toBe('Best Commercial Knives for 2026');
     expect(schema.url).toBe(
-      'https://kitchenequipment.ca/blog/best-commercial-knives-2026'
+      'https://www.kitchenequipment.ca/blog/best-commercial-knives-2026/'
     );
     expect(schema.datePublished).toBe('2026-04-01');
     expect(schema.dateModified).toBe('2026-04-02');
@@ -502,12 +502,12 @@ describe('buildBlogPostingSchema', () => {
       name: 'Kitchen Equipment Canada',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://kitchenequipment.ca/logo.svg',
+        url: 'https://www.kitchenequipment.ca/brand/logo.svg',
       },
     });
     expect(schema.mainEntityOfPage).toEqual({
       '@type': 'WebPage',
-      '@id': 'https://kitchenequipment.ca/blog/best-commercial-knives-2026',
+      '@id': 'https://www.kitchenequipment.ca/blog/best-commercial-knives-2026/',
     });
     expect(schema.mentions).toBeUndefined();
   });
@@ -538,9 +538,9 @@ describe('buildBlogPostingSchema', () => {
     expect(schema.mentions).toEqual([
       {
         '@type': 'LocalBusiness',
-        '@id': 'https://kitchenequipment.ca/companies/shop-at-stop',
+        '@id': 'https://www.kitchenequipment.ca/companies/shop-at-stop/',
         name: 'Shop at Stop',
-        url: 'https://kitchenequipment.ca/companies/shop-at-stop',
+        url: 'https://www.kitchenequipment.ca/companies/shop-at-stop/',
       },
     ]);
   });
@@ -554,7 +554,7 @@ describe('buildBlogIndexSchema', () => {
   it('returns Blog schema with empty list when no posts', () => {
     const schema = buildBlogIndexSchema([]);
     expect(schema['@type']).toBe('Blog');
-    expect(schema.url).toBe('https://kitchenequipment.ca/blog');
+    expect(schema.url).toBe('https://www.kitchenequipment.ca/blog/');
     expect(schema.blogPost).toEqual([]);
   });
 
@@ -575,18 +575,18 @@ describe('buildBlogIndexSchema', () => {
     expect(schema.blogPost).toHaveLength(2);
     expect(schema.blogPost[0]).toEqual({
       '@type': 'BlogPosting',
-      '@id': 'https://kitchenequipment.ca/blog/best-commercial-knives-2026',
+      '@id': 'https://www.kitchenequipment.ca/blog/best-commercial-knives-2026/',
       headline: 'Best Commercial Knives for 2026',
-      url: 'https://kitchenequipment.ca/blog/best-commercial-knives-2026',
+      url: 'https://www.kitchenequipment.ca/blog/best-commercial-knives-2026/',
       datePublished: '2026-04-01',
       description: 'A guide to the best commercial knives.',
       image: 'https://example.com/knife.jpg',
     });
     expect(schema.blogPost[1]).toEqual({
       '@type': 'BlogPosting',
-      '@id': 'https://kitchenequipment.ca/blog/second-post',
+      '@id': 'https://www.kitchenequipment.ca/blog/second-post/',
       headline: 'Second Post',
-      url: 'https://kitchenequipment.ca/blog/second-post',
+      url: 'https://www.kitchenequipment.ca/blog/second-post/',
       datePublished: '2026-04-15',
     });
   });

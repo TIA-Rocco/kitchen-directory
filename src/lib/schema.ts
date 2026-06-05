@@ -4,10 +4,10 @@ export function buildLocalBusinessSchema(company: Company, reviews: Review[]) {
   const schema: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
-    '@id': `https://kitchenequipment.ca/companies/${company.slug}`,
+    '@id': `https://www.kitchenequipment.ca/companies/${company.slug}/`,
     name: company.name,
     description: company.description,
-    url: `https://kitchenequipment.ca/companies/${company.slug}`,
+    url: `https://www.kitchenequipment.ca/companies/${company.slug}/`,
   };
 
   if (company.address) {
@@ -128,9 +128,9 @@ export function buildItemListSchema(
       position: index + 1,
       item: {
         '@type': 'LocalBusiness',
-        '@id': `https://kitchenequipment.ca/companies/${company.slug}`,
+        '@id': `https://www.kitchenequipment.ca/companies/${company.slug}/`,
         name: company.name,
-        url: `https://kitchenequipment.ca/companies/${company.slug}`,
+        url: `https://www.kitchenequipment.ca/companies/${company.slug}/`,
       },
     })),
   };
@@ -141,7 +141,7 @@ export function buildWebSiteSchema() {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'Kitchen Equipment Canada',
-    url: 'https://kitchenequipment.ca',
+    url: 'https://www.kitchenequipment.ca/',
     description:
       'Find and compare the best commercial kitchen equipment suppliers in Canada. Independent ratings, reviews, and service comparisons.',
   };
@@ -152,8 +152,8 @@ export function buildOrganizationSchema() {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'Kitchen Equipment Canada',
-    url: 'https://kitchenequipment.ca',
-    logo: 'https://kitchenequipment.ca/logo.svg',
+    url: 'https://www.kitchenequipment.ca/',
+    logo: 'https://www.kitchenequipment.ca/brand/logo.svg',
   };
 }
 
@@ -161,7 +161,7 @@ export function buildBlogPostingSchema(
   post: BlogPost,
   linkedCompanies: Company[] = []
 ) {
-  const url = `https://kitchenequipment.ca/blog/${post.slug}`;
+  const url = `https://www.kitchenequipment.ca/blog/${post.slug}/`;
   const datePublished = post.published_at
     ? post.published_at.split('T')[0]
     : post.created_at.split('T')[0];
@@ -183,7 +183,7 @@ export function buildBlogPostingSchema(
       name: 'Kitchen Equipment Canada',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://kitchenequipment.ca/logo.svg',
+        url: 'https://www.kitchenequipment.ca/brand/logo.svg',
       },
     },
     mainEntityOfPage: {
@@ -199,9 +199,9 @@ export function buildBlogPostingSchema(
   if (linkedCompanies.length > 0) {
     schema.mentions = linkedCompanies.map((c) => ({
       '@type': 'LocalBusiness',
-      '@id': `https://kitchenequipment.ca/companies/${c.slug}`,
+      '@id': `https://www.kitchenequipment.ca/companies/${c.slug}/`,
       name: c.name,
-      url: `https://kitchenequipment.ca/companies/${c.slug}`,
+      url: `https://www.kitchenequipment.ca/companies/${c.slug}/`,
     }));
   }
 
@@ -212,16 +212,16 @@ export function buildBlogIndexSchema(posts: BlogPost[]) {
   return {
     '@context': 'https://schema.org',
     '@type': 'Blog',
-    '@id': 'https://kitchenequipment.ca/blog',
-    url: 'https://kitchenequipment.ca/blog',
+    '@id': 'https://www.kitchenequipment.ca/blog/',
+    url: 'https://www.kitchenequipment.ca/blog/',
     name: 'Kitchen Equipment Canada Blog',
     description:
       'Buying guides, reviews, and industry insights for commercial kitchen equipment buyers in Canada.',
     blogPost: posts.map((post) => ({
       '@type': 'BlogPosting',
-      '@id': `https://kitchenequipment.ca/blog/${post.slug}`,
+      '@id': `https://www.kitchenequipment.ca/blog/${post.slug}/`,
       headline: post.title,
-      url: `https://kitchenequipment.ca/blog/${post.slug}`,
+      url: `https://www.kitchenequipment.ca/blog/${post.slug}/`,
       datePublished: (post.published_at || post.created_at).split('T')[0],
       ...(post.excerpt ? { description: post.excerpt } : {}),
       ...(post.featured_image_url ? { image: post.featured_image_url } : {}),

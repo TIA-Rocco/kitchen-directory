@@ -74,7 +74,7 @@ const heroPosition = HERO_POSITION[slug] ?? 'center';
 const itemListSchema = buildItemListSchema(
   companies,
   `Best ${serviceName} Suppliers in Canada`,
-  `https://kitchenequipment.ca/services/${slug}`
+  `https://www.kitchenequipment.ca/services/${slug}/`
 );
 
 const serviceSchema = {
@@ -89,7 +89,7 @@ const serviceSchema = {
   provider: companies.map((c: any) => ({
     '@type': 'LocalBusiness',
     name: c.name,
-    url: `https://kitchenequipment.ca/companies/${c.slug}`,
+    url: `https://www.kitchenequipment.ca/companies/${c.slug}/`,
   })),
 };
 
@@ -97,9 +97,9 @@ const breadcrumbSchema = {
   '@context': 'https://schema.org',
   '@type': 'BreadcrumbList',
   itemListElement: [
-    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://kitchenequipment.ca' },
-    { '@type': 'ListItem', position: 2, name: 'Services', item: 'https://kitchenequipment.ca/services' },
-    { '@type': 'ListItem', position: 3, name: serviceName, item: `https://kitchenequipment.ca/services/${slug}` },
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.kitchenequipment.ca/' },
+    { '@type': 'ListItem', position: 2, name: 'Services', item: 'https://www.kitchenequipment.ca/services/' },
+    { '@type': 'ListItem', position: 3, name: serviceName, item: `https://www.kitchenequipment.ca/services/${slug}/` },
   ],
 };
 
@@ -193,7 +193,7 @@ const jsonLd: Record<string, unknown>[] = [
                         </div>
                         <div class="min-w-0">
                           <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                            <a href={`/companies/${company.slug}`} class="text-base font-semibold text-neutral-900 group-hover:text-emerald-600">{company.name}</a>
+                            <a href={`/companies/${company.slug}/`} class="text-base font-semibold text-neutral-900 group-hover:text-emerald-600">{company.name}</a>
                             {company.is_featured && (
                               <span class="inline-flex shrink-0 items-center rounded-full bg-emerald-50 py-0.5 pr-2 pl-1 text-xs font-medium whitespace-nowrap text-emerald-700">
                                 <span class="mr-1 inline-flex size-4 items-center justify-center rounded-full bg-emerald-600 text-[10px] text-white">1</span>
