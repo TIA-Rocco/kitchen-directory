@@ -13,7 +13,7 @@ test.describe('Service category pages', () => {
     test.describe(svc.slug, () => {
       test('renders heading, breadcrumb and a supplier table or empty state', async ({ page }) => {
         const tracker = trackPageErrors(page);
-        await page.goto(`/services/${svc.slug}`);
+        await page.goto(`/services/${svc.slug}/`);
 
         await expect(page).toHaveTitle(new RegExp(`${escapeRe(svc.name)} - Commercial Kitchen Equipment Suppliers`));
         const h1 = await expectSingleH1(page);
@@ -41,13 +41,13 @@ test.describe('Service category pages', () => {
       });
 
       test('emits ItemList + Service + BreadcrumbList JSON-LD', async ({ page }) => {
-        await page.goto(`/services/${svc.slug}`);
+        await page.goto(`/services/${svc.slug}/`);
         const blocks = await getJsonLd(page);
 
         const itemList = findByType(blocks, 'ItemList');
         expect(itemList, 'ItemList').toBeTruthy();
         expect(itemList!.name).toBe(`Best ${svc.name} Suppliers in Canada`);
-        expect(itemList!.url).toBe(`https://www.kitchenequipment.ca/services/${svc.slug}`);
+        expect(itemList!.url).toBe(`https://www.kitchenequipment.ca/services/${svc.slug}/`);
 
         const service = findByType(blocks, 'Service');
         expect(service, 'Service').toBeTruthy();

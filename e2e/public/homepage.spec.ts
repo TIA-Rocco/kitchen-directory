@@ -113,7 +113,7 @@ test.describe('Homepage', () => {
 
       const website = findByType(blocks, 'WebSite');
       expect(website, 'WebSite schema').toBeTruthy();
-      expect(website!.url).toBe('https://www.kitchenequipment.ca');
+      expect(website!.url).toBe('https://www.kitchenequipment.ca/');
 
       const org = findByType(blocks, 'Organization');
       expect(org, 'Organization schema').toBeTruthy();

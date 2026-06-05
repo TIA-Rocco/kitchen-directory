@@ -26,7 +26,7 @@ test.describe('Company profile pages', () => {
     test.describe(company.slug, () => {
       test('renders core structure (h1, breadcrumb, title, no console errors)', async ({ page }) => {
         const tracker = trackPageErrors(page);
-        await page.goto(`/companies/${company.slug}`);
+        await page.goto(`/companies/${company.slug}/`);
 
         await expect(page).toHaveTitle(new RegExp(`${escapeRe(company.name)} - Commercial Kitchen Equipment`));
         const h1 = await expectSingleH1(page);
@@ -41,7 +41,7 @@ test.describe('Company profile pages', () => {
       });
 
       test('rating breakdown shows the score and all 6 weighted criteria', async ({ page }) => {
-        await page.goto(`/companies/${company.slug}`);
+        await page.goto(`/companies/${company.slug}/`);
         const section = page.locator('section', { has: page.getByRole('heading', { name: 'Rating Breakdown' }) });
 
         await expect(section.getByText('out of 10')).toBeVisible();
@@ -57,7 +57,7 @@ test.describe('Company profile pages', () => {
       });
 
       test('every "Services Offered" link resolves to a real service category slug', async ({ page }) => {
-        await page.goto(`/companies/${company.slug}`);
+        await page.goto(`/companies/${company.slug}/`);
         const section = page.locator('section', { has: page.getByRole('heading', { name: 'Services Offered' }) });
         const hrefs = await section.locator('a[href^="/services/"]').evaluateAll((els) =>
           els.map((e) => (e as HTMLAnchorElement).getAttribute('href') || ''),
@@ -70,14 +70,14 @@ test.describe('Company profile pages', () => {
       });
 
       test('FAQ section renders the expected number of Q&A pairs', async ({ page }) => {
-        await page.goto(`/companies/${company.slug}`);
+        await page.goto(`/companies/${company.slug}/`);
         const faq = page.locator('section', { has: page.getByRole('heading', { name: 'Frequently Asked Questions' }) });
         await expect(faq.locator('dt')).toHaveCount(company.faq);
         await expect(faq.locator('dd')).toHaveCount(company.faq);
       });
 
       test('contact sidebar shows address and a Write a Review CTA', async ({ page }) => {
-        await page.goto(`/companies/${company.slug}`);
+        await page.goto(`/companies/${company.slug}/`);
         const aside = page.locator('aside');
         await expect(aside.getByRole('heading', { name: 'Contact Information' })).toBeVisible();
         await expect(aside.getByText('Address', { exact: true })).toBeVisible();
@@ -85,13 +85,13 @@ test.describe('Company profile pages', () => {
       });
 
       test('LocalBusiness JSON-LD is present and consistent with visible reviews', async ({ page }) => {
-        await page.goto(`/companies/${company.slug}`);
+        await page.goto(`/companies/${company.slug}/`);
         const blocks = await getJsonLd(page);
 
         const lb = findByType(blocks, 'LocalBusiness');
         expect(lb, 'LocalBusiness schema').toBeTruthy();
         expect(lb!.name).toBe(company.name);
-        expect(lb!['@id']).toBe(`https://www.kitchenequipment.ca/companies/${company.slug}`);
+        expect(lb!['@id']).toBe(`https://www.kitchenequipment.ca/companies/${company.slug}/`);
         expect((lb!.address as any)['@type']).toBe('PostalAddress');
         expect((lb!.address as any).addressCountry).toBe('CA');
 
