@@ -1,0 +1,15 @@
+# Supabase CLI configuration.
+#
+# Added 2026-06-08 to persist the edge-function JWT setting in source control.
+# Without this, `supabase functions deploy send-transactional-email` defaults
+# verify_jwt back to `true`, which silently re-breaks admin-notification emails:
+# the pg_net DB triggers call the function server-to-server with only an
+# `x-edge-secret` header (no JWT), so the gateway would 401 them before the
+# function runs.
+project_id = "awksvtteuzrzwazqxxyi"
+
+# send-transactional-email enforces its OWN auth via the `x-edge-secret` header
+# (mandatory on hosted deploys), so the gateway JWT check must stay OFF.
+# Do NOT set this back to true — it will break trigger-driven notification email.
+[functions.send-transactional-email]
+verify_jwt = false
