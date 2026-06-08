@@ -397,3 +397,48 @@ Made the shared site header (`src/components/Header.astro`) a **reveal-on-scroll
 - **Guards:** desktop dropdown open + scroll-down → stays shown; mobile hamburger open + scroll-down → stays shown.
 - `npm run build` clean (exit 0, all pages); no console errors on local or live.
 - **Post-merge QA on `https://www.kitchenequipment.ca`** confirmed the reveal cycle + screenshots on both viewports.
+
+## What Was Built (Session: 2026-06-08, PR #67 — Mailgun email go-live + config hardening)
+
+Took the site's email from "configured-but-dormant" to **fully live across all three paths** — magic-link login, admin notifications, and applicant receipts — while keeping the domain owner in **sole control of DNS** (he didn't want to share registrar access). No public-app code changed; the work was DNS, Supabase Auth SMTP, Supabase Edge Function + Vault config, one Vercel env, and a small hardening PR.
+
+### 1. DNS hand-off — owner keeps sole access
+Deliverable was the exact records for the owner to paste himself, plus where to pull each value:
+- **Web (Vercel):** apex `A` + `www` `CNAME` (values read off the Vercel dashboard).
+- **Email (Mailgun) — sending subdomain `mg.kitchenequipment.ca`** (US region, Shared IP, **2048-bit DKIM**, selector `mailo`): `TXT` SPF `v=spf1 include:mailgun.org ~all`; `TXT` DKIM `mailo._domainkey.mg`; `MX` `mxa`/`mxb.mailgun.org`; `TXT` DMARC `_dmarc.mg` (`p=none`).
+- **Tracking CNAME `email.mg` deliberately omitted** — this domain powers magic links, and Mailgun click-tracking rewrites links through the tracking domain, letting email security scanners pre-click and **consume the one-time login token** before the user does.
+
+### 2. Untangled a live nameserver migration (the confusing part)
+Mid-setup the domain's nameservers were **migrating Atom.com → GoDaddy** (bought via the Atom marketplace). Two symptoms looked like failures but weren't:
+- Mailgun records "not showing" — they'd been added at Atom, but authority had moved to GoDaddy; **DNS records don't transfer between providers**, so they had to be re-entered in GoDaddy's panel.
+- The apex "redirecting to an Atom for-sale page" — a **browser-cached permanent (301) redirect** from the old parking page; the live origin was already Vercel (`curl` → `Server: Vercel`, `308 → www`). Incognito showed the real site.
+Diagnosed by querying the authoritative nameservers directly + two public resolvers (which disagreed → migration in flight) and `curl`-ing apex/www at the HTTP level. Once GoDaddy settled as authoritative, the 5 records went in there and Mailgun verified.
+
+### 3. Magic-link login email (Supabase Auth → Mailgun SMTP)
+Custom SMTP in Auth: `smtp.mailgun.org:587`, credential **`no-reply@mg.kitchenequipment.ca`** (from Mailgun → Domain settings → SMTP Credentials — **the SMTP password, NOT the API key**), From `no-reply@`, sender `KitchenEquipment.ca`. Rate limit auto-raised to 30/hr. Verified: Mailgun Accepted→Delivered (`2.0.0 OK … gsmtp`) and a real admin magic-link login succeeded.
+
+### 4. Transactional/notification email (`send-transactional-email` edge function)
+Wired the function the pg_net DB triggers (admin notifications) and the `verify-submission` Astro route (applicant receipts) call:
+- **Edge Function secrets:** `MAILGUN_API_KEY` (US **API key** — distinct from the SMTP password), `MAILGUN_DOMAIN=mg.kitchenequipment.ca`, `EDGE_SHARED_SECRET`, `MAILGUN_FROM='KitchenEquipment.ca <no-reply@mg.kitchenequipment.ca>'`.
+- **Vault** already held `edge_shared_secret` / `mailgun_edge_url` / `admin_emails` (rocco@/llu@/davdeev@) / `site_url` / `vercel_deploy_hook` from prelaunch; aligned `edge_shared_secret` to the new value.
+- **Vercel** `EDGE_SHARED_SECRET` on **Production** (it had been mis-scoped to a Preview branch that didn't exist) + redeploy.
+- **THE KEY BUG — `verify_jwt`:** the function was deployed `verify_jwt:true`, but pg_net triggers call it server-to-server with only an `x-edge-secret` header (no JWT), so the gateway **401'd every trigger-driven notification** before the function ran (confirmed via a no-JWT probe → `401 UNAUTHORIZED_NO_AUTH_HEADER`). Redeployed **`verify_jwt:false`** — safe because the function enforces its own `x-edge-secret` auth (mandatory on hosted). Re-probe → `200 unauthorized` (past the gateway, into the function's own check).
+
+### 5. End-to-end verification (real sends)
+- **Admin notification:** direct call with the correct secret → `{ok:true, mocked:false}`; inbox-delivered from `no-reply@`. (First attempt — from `postmaster@`, before `MAILGUN_FROM` was set — got Gmail-filtered out of the inbox; resending from `no-reply@` landed cleanly. **Lesson: send from `no-reply@`, not `postmaster@`.**)
+- **Applicant receipt:** inserted a temp `unverified` submission (the two admin-notify triggers briefly DISABLED to avoid emailing real admins, then re-enabled + row deleted), hit live `/api/verify-submission?token=…` → `302 status=ok`, edge-fn log `POST 200`, receipt inbox-delivered from `no-reply@`.
+
+### 6. Security finding (false positive)
+A background review flagged `delete.ts` as "missing admin check." It already calls `requireAdmin(locals)` (the PR-#57 convention) — the bot read a stale snippet. No change.
+
+### 7. Hardening shipped in this PR
+- **`supabase/config.toml`** created, pinning `[functions.send-transactional-email] verify_jwt = false` so a future `supabase functions deploy` from source can't silently revert the fix and re-break admin notifications.
+- **Removed orphaned `notify-submission`** edge function from the repo (superseded; invoked by nothing).
+
+### Known / follow-ups (all optional, none blocking)
+- **`EDGE_SHARED_SECRET` lives in 3 stores** (Edge secret, Vault `edge_shared_secret`, Vercel env) — must stay equal; a mismatch silently returns `unauthorized` and sends nothing.
+- **SEC-05 escalated latent → ACTIVE:** `/api/review` + `/api/contact` are honeypot-only and each review fires an admin email → now a live email-bomb / Mailgun-quota vector. Most pressing backlog item.
+- **Live `notify-submission` not auto-deleted** — repo removal ≠ deployment removal; one dashboard click or `supabase functions delete notify-submission` (harmless if left).
+- **Unused root `MAILGUN_DOMAIN`/`MAILGUN_API_KEY` Vercel vars** — legacy; edge fn reads its own from Supabase secrets. Drop for tidiness.
+- **DMARC** `_dmarc.mg` is `p=none` — tighten to `quarantine`→`reject` at GoDaddy (owner) after ~2-4 weeks of monitoring (mg. is a dedicated Mailgun subdomain → alignment already clean).
+- Full operational detail (selectors, secret names, store locations) in the `project_dns_and_email_infra` memory.
