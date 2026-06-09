@@ -55,6 +55,9 @@ const ogImageAlt = `${siteName}: ${title}`;
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:alt" content={ogImageAlt} />
 
+    <!-- Google Search Console verification -->
+    <meta name="google-site-verification" content="p7b7atrYTNaA0HXIVyCdrXgHeS6ldTDlJ0TtdaKbQDA" />
+
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
@@ -85,6 +88,15 @@ const ogImageAlt = `${siteName}: ${title}`;
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-LR39F9SB25"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-LR39F9SB25');
+    </script>
   </head>
   <body class="min-h-screen bg-white text-neutral-900 antialiased">
     <div class="isolate">
