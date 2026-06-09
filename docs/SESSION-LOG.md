@@ -377,6 +377,28 @@ Worked the SEO pre-launch audit (Asana task 1212777623943265) and the technical 
 - **GSC verification + sitemap submission, Screaming Frog + Ahrefs crawls, index-status** — separate post-launch Asana task (Dejeesh).
 - **`Organization` `sameAs` + `contactPoint`** — not added; needs the owner's real social URLs + contact email (strongest remaining AEO entity signal). A `/companies` index page would also improve crawl depth + give the company breadcrumb a real middle crumb.
 
+## What Was Built (Session: 2026-06-09, PR #68 — GA4 + Google Search Console tracking)
+
+Added Google Analytics 4 and Google Search Console ownership verification to the live site. Single-file change (`src/layouts/Base.astro`) — both tags are site-wide because every public page renders through that shared base layout.
+
+### Changes (`src/layouts/Base.astro` only)
+1. **GSC verification meta tag** — `<meta name="google-site-verification" content="p7b7atrYTNaA0HXIVyCdrXgHeS6ldTDlJ0TtdaKbQDA" />` added to `<head>` after the OG block. Allows Dejeesh / the SEO team to verify ownership and submit the sitemap in Google Search Console.
+2. **GA4 script pair** — async `gtag.js` loader + inline `dataLayer` init block for property `G-LR39F9SB25` added just before `</head>`. Standard Google-recommended snippet; SRI intentionally omitted (Google's CDN serves a continuously-updated file with no stable hash — SRI would break on every Google push).
+
+### Why no SRI on gtag.js
+`integrity="sha384-..."` is incompatible with `googletagmanager.com/gtag/js` — Google rotates the script content without versioning the URL, so any fixed hash would fail verification the next time Google deploys. This is a documented Google Analytics limitation and standard practice across all GA4 implementations.
+
+### Verification (Chrome DevTools against live site)
+- **Homepage (`www.kitchenequipment.ca`):** GSC meta content correct; GA4 script loaded from `googletagmanager.com`; `dataLayer` shows 4 entries including `config` event for `G-LR39F9SB25`.
+- **Company profile (`/companies/shop-at-stop`):** same checks — both tags present, `ga4_config_fired: true`.
+- Confirmed site-wide: both tags present on every page type tested.
+
+### Follow-ups
+- GSC ownership verification: Dejeesh can now verify in Search Console and submit the sitemap (`https://www.kitchenequipment.ca/sitemap-index.xml`).
+- GA4 Realtime report should show traffic within minutes of deploy.
+
+---
+
 ## What Was Built (Session: 2026-06-05, PR #65 — reveal-on-scroll-up sticky header)
 
 Made the shared site header (`src/components/Header.astro`) a **reveal-on-scroll-up sticky nav** so the nav is reachable from anywhere on the page without permanently occupying the viewport.
