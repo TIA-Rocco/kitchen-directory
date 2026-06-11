@@ -61,10 +61,9 @@ export default defineConfig({
   integrations: [
     sitemap({
       // Keep non-public / non-indexable surfaces out of the sitemap:
-      // - /blog/* — temporarily hidden (noindexed + unlinked) pending content-team review.
       // - /admin/* — authenticated admin panel (also noindexed via Admin.astro).
       // - /thank-you, /verify-submission — thin post-action pages (noindexed); no search value.
-      filter: (page) => !/\/(blog|admin|thank-you|verify-submission)(\/|$)/.test(page),
+      filter: (page) => !/\/(admin|thank-you|verify-submission)(\/|$)/.test(page),
       // Attach trustworthy per-page lastmod from the company-data map above.
       serialize(item) {
         const lastmod = lastmodByUrl[item.url] ?? siteLastmod;
